@@ -2,4 +2,8 @@ old/
 new/
 .idea/
 *.csv
+*.tsv
 *.pyc
+submission/*
+runs/*
+

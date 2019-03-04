@@ -1,6 +1,8 @@
 from keras.layers import Layer
-from keras.initializers import RandomUniform, RandomNormal
+from keras.initializers import RandomUniform, RandomNormal, Identity, Constant, TruncatedNormal, Zeros, Ones
 from keras.constraints import NonNeg
+import keras.backend as K
+import keras.layers as l
 
 import numpy as np
 import tensorflow as tf
@@ -15,169 +17,173 @@ class DiscretizationLayer(Layer):
         super(DiscretizationLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
+        l = -3
+        u = -l
+        initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
+        initer = np.concatenate(initer, axis=0)
+        width_val = 4. * float(u - l) / input_shape[1]
         super(DiscretizationLayer, self).build(input_shape)
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(input_shape[1], self.output_dim),
-                                      initializer=RandomUniform(minval=-2, maxval=2),
-                                      trainable=True)
+        self.bins = self.add_weight(name='bins',
+                                    shape=(input_shape[1], self.output_dim),
+                                    initializer=Constant(initer),
+                                    trainable=True)
 
-        self.sigmas = self.add_weight(name='sigma',
+        self.widths = self.add_weight(name='widths',
                                       shape=(input_shape[1], self.output_dim),
-                                      initializer=RandomNormal(mean=1, stddev=0.1),
+                                      initializer=TruncatedNormal(width_val, width_val / 4),
                                       constraint=NonNeg(),
                                       trainable=True)
 
-        self.mix = self.add_weight(name='mix',
-                                   shape=(input_shape[1], self.output_dim,),
-                                   initializer=RandomNormal(1, 0.1),
-                                   constraint=NonNeg(),
-                                   trainable=True)
-
-        self.temperature = self.add_weight(name='temperature',
-                                           shape=(input_shape[1], 1,),
-                                           initializer=RandomNormal(1, 0.1),
-                                           trainable=True)
+        self.biases = self.add_weight(name='biases',
+                                      shape=(input_shape[1], self.output_dim,),
+                                      initializer='glorot_uniform',#TruncatedNormal(0, 1),
+                                      trainable=True)
 
         self.built = True
 
     def call(self, inputs, **kwargs):
-        dimension_out = self.output_dim
-        x_expanded = tf.expand_dims(inputs, -1)
-        x = tf.tile(x_expanded, [1, 1, dimension_out])
-        means = self.kernel
-        bias = self.mix
-        sigma = self.sigmas
-        temp = self.temperature
-        x = tf.square(bias) + -1 * tf.square(x - means) * tf.square(sigma)
-        x = x / (1e-7 + tf.abs(temp))
-        x_ml = tf.nn.softmax(x)
-        x = x_ml * x_expanded
-        x = tf.reduce_sum(x, axis=1)
+        x = tf.expand_dims(inputs, -1)
+        bins = self.biases - tf.abs(x - self.bins) * self.widths
+        bins2prob = tf.nn.softmax(bins)
+        x = bins2prob * x
+        x = tf.reduce_mean(x, axis=1)
         return x
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.output_dim,)
 
 
-class DiscretizationLayerLite(Layer):
+class DiscretizationLayerWide(Layer):
     def __init__(self, output_dim, **kwargs):
         self.output_dim = output_dim
-        super(DiscretizationLayerLite, self).__init__(**kwargs)
+        super(DiscretizationLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        super(DiscretizationLayerLite, self).build(input_shape)
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(1, self.output_dim),
-                                      initializer=RandomUniform(minval=-2, maxval=2),
-                                      trainable=True)
+        l = -3
+        u = -l
+        initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
+        initer = np.concatenate(initer, axis=0)
+        width_val = 3. * float(u - l) / input_shape[1]
+        super(DiscretizationLayerWide, self).build(input_shape)
+        self.bins = self.add_weight(name='bins',
+                                    shape=(input_shape[1], self.output_dim),
+                                    initializer=Constant(initer),
+                                    trainable=True)
 
-        self.sigmas = self.add_weight(name='sigma',
-                                      shape=(1, self.output_dim),
-                                      initializer=RandomNormal(mean=1, stddev=0.1),
+        self.widths = self.add_weight(name='widths',
+                                      shape=(input_shape[1], self.output_dim),
+                                      initializer=TruncatedNormal(width_val, width_val / 4),
                                       constraint=NonNeg(),
                                       trainable=True)
 
-        self.mix = self.add_weight(name='mix',
-                                   shape=(1, self.output_dim,),
-                                   initializer=RandomNormal(1, 0.1),
-                                   constraint=NonNeg(),
-                                   trainable=True)
+        self.biases = self.add_weight(name='biases',
+                                      shape=(input_shape[1], self.output_dim,),
+                                      initializer=Zeros(),
+                                      trainable=True)
 
-        self.temperature = self.add_weight(name='temperature',
-                                           shape=(1, 1,),
-                                           initializer=RandomNormal(1, 0.1),
-                                           trainable=True)
+        self.dense_weight = self.add_weight(name='w',
+                                            shape=(input_shape[1], self.output_dim),
+                                            initializer='glorot_uniform', # RandomUniform(-1, 1),#
+                                            trainable=True)
+
+        self.dense_bias = self.add_weight(name='b',
+                                          shape=(input_shape[1],),
+                                          initializer=Zeros(),#RandomUniform(-0.1, 0.1),  # 'glorot_uniform',
+                                          trainable=True)
 
         self.built = True
 
     def call(self, inputs, **kwargs):
-        dimension_in = inputs.shape[1]
-        dimension_out = self.output_dim
-        x_expanded = tf.expand_dims(inputs, -1)
-        x = tf.tile(x_expanded, [1, 1, dimension_out])
-        means = tf.tile(self.kernel, [dimension_in, 1])
-        bias = tf.tile(self.mix, [dimension_in, 1])
-        sigma = tf.tile(self.sigmas, [dimension_in, 1])
-        temp = tf.tile(self.temperature, [dimension_in, 1])
-        x = tf.square(bias) + -1 * tf.square(x - means) * tf.square(sigma)
-        x = x / (1e-7 + tf.abs(temp))
-        x_ml = tf.nn.softmax(x)
-        x = x_ml * x_expanded
-        x = tf.reduce_sum(x, axis=1)
+        input = tf.expand_dims(inputs, -1)
+        bins = self.biases - tf.abs(input - self.bins) * self.widths
+        bins2prob = tf.nn.softmax(tf.nn.elu(bins))
+        x = bins2prob * self.dense_weight# + self.dense_bias
+        x = tf.reduce_sum(x, axis=2) + self.dense_bias
+        x = tf.nn.tanh(x)
+        #x = x * inputs
         return x
 
+
     def compute_output_shape(self, input_shape):
-        return (input_shape[0], self.output_dim,)
+        return input_shape
 
 
-class DiscretizationLayerLaplace(Layer):
+class LaplaceLayerWide(Layer):
     def __init__(self, output_dim, **kwargs):
         self.output_dim = output_dim
-        super(DiscretizationLayerLaplace, self).__init__(**kwargs)
+        super(LaplaceLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        super(DiscretizationLayerLaplace, self).build(input_shape)
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(input_shape[1], self.output_dim),
-                                      initializer=RandomUniform(minval=-2, maxval=2),
-                                      trainable=True)
+        initer = [np.linspace(-3, 3, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
+        initer = np.concatenate(initer, axis=0)
+        width_val = 4 * 6. /input_shape[1]
+        widths = np.sqrt(width_val) * np.ones((input_shape[1], self.output_dim))
+        super(LaplaceLayerWide, self).build(input_shape)
+        self.bins = self.add_weight(name='bins',
+                                    shape=(input_shape[1], self.output_dim),
+                                    initializer=Constant(initer),
+                                    trainable=True)
 
-        self.sigmas = self.add_weight(name='sigma',
+        self.widths = self.add_weight(name='widths',
                                       shape=(input_shape[1], self.output_dim),
-                                      initializer=RandomNormal(mean=1, stddev=0.1),
+                                      initializer=Constant(widths),#TruncatedNormal(width_val, width_val / 4),
                                       constraint=NonNeg(),
                                       trainable=True)
+
+        self.dense_weight = self.add_weight(name='w',
+                                            shape=(input_shape[1], self.output_dim),
+                                            initializer='glorot_uniform',
+                                            trainable=True)
+
+        #self.dense_bias = self.add_weight(name='b',
+        #                                  shape=(self.output_dim,),
+        #                                  initializer=Zeros(),#TruncatedNormal(1. / width_val, .25 / width_val),
+        #                                  trainable=True)
 
         self.built = True
 
     def call(self, inputs, **kwargs):
-        dimension_out = self.output_dim
-        x_expanded = tf.expand_dims(inputs, -1)
-        x = tf.tile(x_expanded, [1, 1, dimension_out])
-        means = self.kernel
-        sigma = self.sigmas
-        x = tf.exp(-1 * tf.abs(x - means) / (1e-5 + sigma)) / (1e-5 + 2 * sigma)
-        x_ml = x / tf.reduce_mean(x, axis=2, keep_dims=True)
-        x = x_ml * x_expanded
-        x = tf.reduce_sum(x, axis=1)
+        x = tf.expand_dims(inputs, -1)
+        x = tf.exp(-1 * tf.abs(x - self.bins) / (K.epsilon() + self.widths)) / (K.epsilon() + 2 * self.widths)
+        bins2prob = x / tf.reduce_mean(x, axis=2, keep_dims=True)
+        x = bins2prob * self.dense_weight
+        x = tf.reduce_sum(x, axis=2)
+        #x = tf.nn.tanh(x)
+        #x = x * inputs
         return x
 
+
     def compute_output_shape(self, input_shape):
-        return (input_shape[0], self.output_dim,)
+        return input_shape
 
 
-class DiscretizationLayerLaplaceLite(Layer):
+class LogarithmLayer(Layer):
     def __init__(self, output_dim, **kwargs):
         self.output_dim = output_dim
-        super(DiscretizationLayerLaplaceLite, self).__init__(**kwargs)
+        super(LogarithmLayer, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        super(DiscretizationLayerLaplaceLite, self).build(input_shape)
+        super(LogarithmLayer, self).build(input_shape)
         self.kernel = self.add_weight(name='kernel',
-                                      shape=(1, self.output_dim),
-                                      initializer=RandomUniform(minval=-2, maxval=2),
+                                      shape=(input_shape[1], self.output_dim),
+                                      initializer=Identity(1. / input_shape[1]),
                                       trainable=True)
 
-        self.sigmas = self.add_weight(name='sigma',
-                                      shape=(1, self.output_dim),
-                                      initializer=RandomNormal(mean=1, stddev=0.1),
-                                      constraint=NonNeg(),
-                                      trainable=True)
+        self.bias = self.add_weight(name='bias',
+                                    shape=(self.output_dim,),
+                                    initializer='glorot_uniform',
+                                    trainable=True)
 
         self.built = True
 
     def call(self, inputs, **kwargs):
-        dimension_in = inputs.shape[1]
-        dimension_out = self.output_dim
-        x_expanded = tf.expand_dims(inputs, -1)
-        x = tf.tile(x_expanded, [1, 1, dimension_out])
-        means = tf.tile(self.kernel, [dimension_in, 1])
-        sigma = tf.tile(self.sigmas, [dimension_in, 1])
-        x = tf.exp(-1 * tf.abs(x - means) / (1e-5 + sigma)) / (1e-5 + 2 * sigma)
-        x_ml = x / tf.reduce_mean(x, axis=2, keep_dims=True)
-        x = x_ml * x_expanded
-        x = tf.reduce_sum(x, axis=1)
+        x = tf.log(1e-5 + tf.abs(inputs))
+        x = tf.matmul(x, self.kernel) + self.bias
+        x = tf.exp(x)
         return x
 
     def compute_output_shape(self, input_shape):
         return (input_shape[0], self.output_dim,)
+
+
+
