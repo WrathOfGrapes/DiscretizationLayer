@@ -53,17 +53,17 @@ folder_path = os.path.join('runs', folder_name)
 n_fold = 5 if args.prod else 1
 
 if n_fold == 1:
-    data = pd.read_csv('data_train.csv')
+    data = pd.read_csv('./data/data_train.csv')
 else:
-    data = pd.read_csv('train.csv')
+    data = pd.read_csv('./data/train.csv')
 X = data.drop(columns=['ID_code', 'target']).values
 y = data['target'].values
 
-data_val = pd.read_csv('data_test.csv')
+data_val = pd.read_csv('./data/data_test.csv')
 X_validation = data_val.drop(columns=['ID_code', 'target']).values
 y_validation = data_val['target'].values
 
-test_df = pd.read_csv('test.csv')
+test_df = pd.read_csv('./data/test.csv')
 test = test_df.drop(columns=['ID_code']).values
 
 scaler = StandardScaler()
