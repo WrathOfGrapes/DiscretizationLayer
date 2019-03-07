@@ -12,6 +12,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from net import make_net, IntervalEvaluation, make_net2, make_net3
+import visualization
 import experiment_utils
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import class_weight
@@ -73,7 +74,7 @@ test = scaler.transform(test)
 X = scaler.transform(X)
 X_validation = scaler.transform(X_validation)
 
-ld = 200
+ld = 100
 
 if n_fold > 1:
     folds = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=42)
@@ -107,6 +108,7 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
               callbacks=callbacks)
 
     model.load_weights(checkpoint_path)
+    
 
     pred = model.predict(X_validation)
     train_predictions_history.append(pred)
@@ -125,7 +127,7 @@ if n_fold > 1:
         y_train, y_valid = y[train_index], y[valid_index]
         train_model(X_train, y_train, X_valid, y_valid, fold_n)
 else:
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=27)
     train_model(X_train, y_train, X_valid, y_valid, 0)
 
 print('Submission')
@@ -134,4 +136,4 @@ sub["target"] = history_to_predictions_mean(predictions_history)
 sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
 
 with open('./results.tsv', 'a') as f:
-    f.write('%s\t%f' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))
+    f.write('%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))

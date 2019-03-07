@@ -54,7 +54,7 @@ class DiscretizationLayer(Layer):
 
 
 class DiscretizationLayerWide(Layer):
-    def __init__(self, output_dim, **kwargs):
+    def __init__(self, output_dim, layer_config, **kwargs):
         self.output_dim = output_dim
         super(DiscretizationLayerWide, self).__init__(**kwargs)
 

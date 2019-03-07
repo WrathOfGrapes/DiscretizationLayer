@@ -260,9 +260,9 @@ def disc_block(size, input):#l.Dense(size, activation='elu')(input)#
     return next
 
 
-def wide_disc_block(size, input):#l.Dense(size, activation='elu')(input)#
+def wide_disc_block(size, input, layer_config):#l.Dense(size, activation='elu')(input)#
     #next = l.Dense(10 * size, activation='elu')(input)
-    next = DiscretizationLayerWide(size)(input)
+    next = DiscretizationLayerWide(size, layer_config)(input)
     #next = l.ELU()(next)
     return next
 
@@ -296,7 +296,7 @@ def make_net(ld, lr, configs):
     drate = 0.1
 
     #next = l.BatchNormalization()(next)
-    next = wide_disc_block(ld, next)
+    next = wide_disc_block(ld, next, configs.get('disc_layer', {}))
     local_model = Model(input=input, output=next)
     next = l.BatchNormalization()(next)
     next = l.Dropout(drate)(next)
