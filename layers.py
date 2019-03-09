@@ -60,9 +60,9 @@ class DiscretizationLayerWide(Layer):
         super(DiscretizationLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        l = self.layer_config.get('bins_init_range', 3)
+        l = self.layer_config['bins_init_range']
         u = -l
-        bins_init = self.layer_config.get('bins_init', 'linspace')
+        bins_init = self.layer_config['bins_init']
         if bins_init == 'linspace':
             initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
             initer = np.concatenate(initer, axis=0)

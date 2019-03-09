@@ -17,10 +17,12 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import class_weight
 import visualization
 import json
+from deep_dict import DeepDict
 
 from keras import backend as K
 import os
 import time
+from pprint import pprint
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -50,9 +52,15 @@ def history_to_predictions_mean(history):
 
 args = experiment_utils.parse_args()
 
-DEFAULT_DICT = {'disc_layer': {'bins_init': 'uniform'}}
+configs = DeepDict({'disc_layer': {'bins_init': 'linspace',
+                                  'bins_init_range': 3}})
 
-configs = json.load(open(args.configs, 'r')) if args.configs is not None else DEFAULT_DICT
+configs_update = json.load(open(args.configs, 'r')) if args.configs is not None else {}
+
+configs.merge(configs_update)
+
+print('Final config file:')
+pprint(configs)
 
 
 folder_name = experiment_utils.create_experiment_folder(args.name)
