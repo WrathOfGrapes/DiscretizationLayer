@@ -12,7 +12,7 @@ def parse_args():
 
 
 def create_experiment_folder(folder_name=None):
-    name = folder_name or time.strftime('{%H_%M_%S}')
+    name = folder_name or time.strftime('%H_%M_%S')
     i = 0
     while i < 100:
         try:
@@ -26,6 +26,7 @@ def create_experiment_folder(folder_name=None):
         raise Exception("There are more then 100 experiment folders with name `%s`!" % folder_name)
     os.makedirs('./runs/' + name + postfix + '/train')
     os.makedirs('./runs/' + name + postfix + '/test')
+    os.makedirs('./runs/' + name + postfix + '/pics')
     return name + postfix
 
 

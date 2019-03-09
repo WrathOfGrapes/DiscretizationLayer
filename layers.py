@@ -56,18 +56,27 @@ class DiscretizationLayer(Layer):
 class DiscretizationLayerWide(Layer):
     def __init__(self, output_dim, layer_config, **kwargs):
         self.output_dim = output_dim
+        self.layer_config = layer_config
         super(DiscretizationLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        l = -3
+        l = self.layer_config.get('bins_init_range', 3)
         u = -l
-        initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
-        initer = np.concatenate(initer, axis=0)
+        bins_init = self.layer_config.get('bins_init', 'linspace')
+        if bins_init == 'linspace':
+            initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
+            initer = np.concatenate(initer, axis=0)
+            init = Constant(initer)
+        elif bins_init == 'uniform':
+            init = RandomUniform(l, u)
+        else:
+            raise Exception(bins_init)
+
         width_val = 3. * float(u - l) / input_shape[1]
         super(DiscretizationLayerWide, self).build(input_shape)
         self.bins = self.add_weight(name='bins',
                                     shape=(input_shape[1], self.output_dim),
-                                    initializer=Constant(initer),
+                                    initializer=init,
                                     trainable=True)
 
         self.widths = self.add_weight(name='widths',

@@ -12,10 +12,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from net import make_net, IntervalEvaluation, make_net2, make_net3
-import visualization
 import experiment_utils
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import class_weight
+import visualization
+import json
 
 from keras import backend as K
 import os
@@ -48,6 +49,12 @@ def history_to_predictions_mean(history):
 
 
 args = experiment_utils.parse_args()
+
+DEFAULT_DICT = {'disc_layer': {'bins_init': 'uniform'}}
+
+configs = json.load(open(args.configs, 'r')) if args.configs is not None else DEFAULT_DICT
+
+
 folder_name = experiment_utils.create_experiment_folder(args.name)
 folder_path = os.path.join('runs', folder_name)
 
@@ -88,11 +95,13 @@ batch_size = 1024
 
 
 def train_model(X_train, y_train, X_valid, y_valid, fold_number):
+
     print('Fold', fold_number + 1, 'started at', time.ctime())
     K.clear_session()
 
-    model, local_model = make_net(ld, 1e-3, configs=args.configs)
+    model, local_model = make_net(ld, 1e-3, configs=configs)
 
+    visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)), target_path_prefix=os.path.join(folder_path, 'pics/start_%d' % fold_number))
     print(model.summary())
     print('Train mean', np.mean(y_train), 'Test mean', np.mean(y_valid))
 
@@ -104,10 +113,13 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1, save_best_only=True, mode='max'),
         EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
 
+    json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'))
+
     model.fit(X_train, y_train, batch_size=batch_size, epochs=100, shuffle=True, validation_data=(X_valid, y_valid),
               callbacks=callbacks)
 
     model.load_weights(checkpoint_path)
+    visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)), target_path_prefix=os.path.join(folder_path, 'pics/trained_%d' % fold_number))
     
 
     pred = model.predict(X_validation)

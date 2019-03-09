@@ -62,12 +62,47 @@ def plot_all_bins(bins, true_values, bounds=None):
 
     return ax
 
+def plot_all_bins_model(model, data, feature_list: list, target_path_prefix, model_type='DiscretizationLayerWide', ):
+    weights = get_disc_layer_weights(model, model_type=model_type)
+    for i in feature_list:
+        plot_all_bins(weights['bins'][i], data[i])
+        plt.savefig(target_path_prefix + ('_%d.png' % i))
+        plt.clf()
+
 def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases,  **kwargs, ):
     bin = bins[input_feature_ind, output_feature_ind]
     width = widths[input_feature_ind, output_feature_ind]
     bias = biases[input_feature_ind, output_feature_ind]
-    return  plot_weights(bin, width, bias, true_values=train_data[:, input_feature_ind])
+    true_values = train_data[:, input_feature_ind] if train_data is not None else None
+    return  plot_weights(bin, width, bias, true_values=true_values)
 
+
+
+# import pandas as pd
+# from net import make_net
+# from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
+
+# model, local_model = make_net(100, 1e-3, configs={'disc_layer': {'bins_init': 'uniform'}})
+#
+# data = pd.read_csv('./data/data_train.csv')
+# X = data.drop(columns=['ID_code', 'target']).values
+# scaler = StandardScaler()
+# scaler.fit(X)
+# X = scaler.transform(X)
+#
+# weights = get_disc_layer_weights(model)
+# plot_all_bins(weights['bins'][0], X[0])
+# plt.savefig('all_bins_%d_uniform_10_start.png' % 0)
+# plt.clf()
+#
+# model.load_weights('runs/uniform_10/model_0')
+# weights = get_disc_layer_weights(model)
+# for i in range(10):
+#     in_feature = i
+#     plot_all_bins(weights['bins'][in_feature], X[in_feature])
+#     plt.savefig('all_bins_%d_uniform_10.png' % i)
+#     plt.clf()
 
 
 # import pandas as pd
@@ -84,8 +119,14 @@ def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, b
 # scaler.fit(X)
 # X = scaler.transform(X)
 #
+#
+#
 # for i in range(10):
 #     in_feature = i
-#     plot_all_bins(weights['bins'][in_feature], X[in_feature])
-#     plt.savefig('all_bins_%d.png' % i)
+#     gt = X
+#     # plot_all_bins(weights['bins'][in_feature], X[in_feature])
+#     for j in range(0, 150, 10):
+#         plot_dist(i, j, gt, **weights)
+#         gt = None # plot true distribution only once
+#     plt.savefig('all_bins_dists_%d.png' % i)
 #     plt.clf()
