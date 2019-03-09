@@ -4,12 +4,13 @@ from matplotlib import pyplot as plt
 import keras
 
 
-def draw_function(func, true_values=None, bounds=None):
+def draw_function(func, true_values=None, bounds=None, label=None):
+    # plt.clf()
     ax = plt.subplot(111)
 
     if true_values is not None:
         # plot train data distribution
-        sns.distplot(true_values, ax=ax, hist=False)
+        sns.distplot(true_values, ax=ax, hist=False, label=label)
         [line.set_linestyle("--") for line in ax.lines]
 
     if bounds is None:
@@ -21,9 +22,9 @@ def draw_function(func, true_values=None, bounds=None):
     return ax
 
 
-def plot_weights(bin, width, bias, true_values=None):
+def plot_weights(bin, width, bias, true_values=None, label=None):
     y_func = lambda x: bias - abs(x - bin) * width
-    return draw_function(y_func, true_values)
+    return draw_function(y_func, true_values, label=label)
 
 
 def get_weight_by_name(model: keras.models.Model, name):
@@ -62,26 +63,88 @@ def plot_all_bins(bins, true_values, bounds=None):
 
     return ax
 
+
 def plot_all_bins_model(model, data, feature_list: list, target_path_prefix, model_type='DiscretizationLayerWide', ):
     weights = get_disc_layer_weights(model, model_type=model_type)
     for i in feature_list:
+        plt.clf()
         plot_all_bins(weights['bins'][i], data[i])
         plt.savefig(target_path_prefix + ('_%d.png' % i))
-        plt.clf()
 
-def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases,  **kwargs, ):
+
+def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases, **kwargs, ):
     bin = bins[input_feature_ind, output_feature_ind]
     width = widths[input_feature_ind, output_feature_ind]
     bias = biases[input_feature_ind, output_feature_ind]
     true_values = train_data[:, input_feature_ind] if train_data is not None else None
-    return  plot_weights(bin, width, bias, true_values=true_values)
+    return plot_weights(bin, width, bias, true_values=true_values)
 
 
+def plot_bin_vertical(model, out_feature_inds, target_path, model_type='DiscretizationLayerWide'):
+    plt.clf()
+    weights = get_disc_layer_weights(model, model_type=model_type)
+    ax = plt.subplot(111)
+    for j in out_feature_inds:
+        bins = weights['bins'][:, j]
+        sns.distplot(bins, hist=False, label='ind: %d' % j, ax=ax)
+    plt.savefig(target_path)
+
+
+def plot_presoftmax(model, data, in_feature_inds, out_feature_inds, target_path_prefix, axis='horizontal',
+                    model_type='DiscretizationLayerWide'):
+    weights = get_disc_layer_weights(model, model_type=model_type)
+    assert axis in ['vertical', 'horizontal']
+    # ax = plt.subplot(111)
+    # if axis == 'horizontal':
+    #     iter_1 = in_feature_inds
+    #     iter_2 = out_feature_inds
+    # elif axis == 'vertical':
+    #     iter_1 = out_feature_inds
+    #     iter_2 = in_feature_inds
+    # else:
+    #     raise Exception
+
+    in_ind = 0
+    out_ind = 0
+
+    while in_ind < len(in_feature_inds) and out_ind < len(out_feature_inds):
+        plt.clf()
+        while in_ind < len(in_feature_inds) and out_ind < len(out_feature_inds):
+            in_feature = in_feature_inds[in_ind]
+            out_feature = out_feature_inds[out_ind]
+            plot_weights(weights['bins'][in_feature, out_feature],
+                         weights['widths'][in_feature, out_feature],
+                         weights['biases'][in_feature, out_feature],
+                         true_values=data[:, in_feature] if axis == 'horizontal' else None,
+                         label='%s feature=%d' % (('in', in_feature) if axis == 'vertical' else ('out', out_feature)))
+            if axis == 'vertical':
+                in_ind +=1
+            else:
+                out_ind += 1
+        plt.savefig(target_path_prefix + ('_%d.png' % (in_feature if axis == 'horizontal' else out_feature)))
+        if axis == 'vertical':
+            out_ind += 1
+            in_ind = 0
+        else:
+            out_ind = 0
+            in_ind += 1
+
+    # for i in iter_1:
+    #     plt.clf()
+    #     for j in iter_2:
+
+
+
+
+# def plot_model(model, plot_fn, target_path_prefix, model_type='DiscretizationLayerWide', **kwargs):
+#     weights = get_disc_layer_weights(model, model_type=model_type)
+#     plt.clf()
+#     ax = plt.subplot(111)
+#     plot_fn(weights=weights, ax=ax, **kwargs)
 
 # import pandas as pd
 # from net import make_net
 # from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
 
 # model, local_model = make_net(100, 1e-3, configs={'disc_layer': {'bins_init': 'uniform'}})
 #
@@ -104,20 +167,25 @@ def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, b
 #     plt.savefig('all_bins_%d_uniform_10.png' % i)
 #     plt.clf()
 
-
-# import pandas as pd
-# from net import make_net
-# from sklearn.preprocessing import MinMaxScaler, StandardScaler
-#
-#
-# model, local_model = make_net(100, 1e-3, configs=None)
-# model.load_weights('model_0')
-# weights = get_disc_layer_weights(model)
-# data = pd.read_csv('./data/data_train.csv')
-# X = data.drop(columns=['ID_code', 'target']).values
-# scaler = StandardScaler()
-# scaler.fit(X)
-# X = scaler.transform(X)
+    # import pandas as pd
+    # from net import make_net
+    # from sklearn.preprocessing import MinMaxScaler, StandardScaler
+    # from deep_dict import DeepDict
+    #
+    # configs = DeepDict({'disc_layer': {'bins_init': 'uniform',
+    #                                    'bins_init_range': 3}})
+    # model, local_model = make_net(100, 1e-3, configs=configs)
+    # model.load_weights('runs/linspace/model_0')
+    # weights = get_disc_layer_weights(model)
+    # data = pd.read_csv('./data/data_train.csv')
+    # X = data.drop(columns=['ID_code', 'target']).values
+    # scaler = StandardScaler()
+    # scaler.fit(X)
+    # X = scaler.transform(X)
+    # plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10), axis='horizontal',
+    #                 target_path_prefix='./pics/horizontal_function_vis_')
+    # plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10), axis='vertical',
+    #                 target_path_prefix='./pics/vertical_function_vis_')
 #
 #
 #
@@ -130,3 +198,4 @@ def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, b
 #         gt = None # plot true distribution only once
 #     plt.savefig('all_bins_dists_%d.png' % i)
 #     plt.clf()
+

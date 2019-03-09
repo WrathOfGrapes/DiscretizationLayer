@@ -50,10 +50,30 @@ def history_to_predictions_mean(history):
     return np.mean(history, axis=1).reshape(-1)
 
 
+def plot_everything(model, experiment_folder, prefix='', model_type='DiscretizationLayerWide'):
+    visualization.plot_bin_vertical(model, [0, 30, 60, 90],
+                                    target_path=os.path.join(experiment_folder, 'pics', 'bins_vertical.png'))
+
+    path_prefixs = [os.path.join(experiment_folder, 'pics', prefix + name, prefix + name) for name in
+                    "horizontal_bins horizontal_fn vertical_fn".split()]
+    [os.makedirs(os.path.split(path)[0]) for path in path_prefixs]
+    visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
+                                      target_path_prefix=path_prefixs[0])
+    visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+                                  axis='horizontal',
+                                  target_path_prefix=path_prefixs[1])
+    visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+                                  axis='vertical',
+                                  target_path_prefix=path_prefixs[2])
+
+
 args = experiment_utils.parse_args()
 
-configs = DeepDict({'disc_layer': {'bins_init': 'linspace',
-                                  'bins_init_range': 3}})
+configs = DeepDict({'disc_layer': {'name': None,
+                                   'bins_init': 'linspace',
+                                   'bins_init_range': 3,
+                                   'pre_sm_dropout': 0.0,
+                                   'softmax': True}})
 
 configs_update = json.load(open(args.configs, 'r')) if args.configs is not None else {}
 
@@ -62,8 +82,11 @@ configs.merge(configs_update)
 print('Final config file:')
 pprint(configs)
 
+# Choosing name. Priorities: name from command line > name in configs > name of the config file
+experiment_name = args.name or configs['name'] or (
+    os.path.split(args.configs)[-1].split('.')[0] if args.configs else None)
 
-folder_name = experiment_utils.create_experiment_folder(args.name)
+folder_name = experiment_utils.create_experiment_folder(args.name or configs['name'])
 folder_path = os.path.join('runs', folder_name)
 
 n_fold = 5 if args.prod else 1
@@ -103,16 +126,27 @@ batch_size = 1024
 
 
 def train_model(X_train, y_train, X_valid, y_valid, fold_number):
-
     print('Fold', fold_number + 1, 'started at', time.ctime())
     K.clear_session()
 
     model, local_model = make_net(ld, 1e-3, configs=configs)
 
-    visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)), target_path_prefix=os.path.join(folder_path, 'pics/start_%d' % fold_number))
+    plot_everything(model, experiment_folder=folder_path, prefix='init_')
+    # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
+    #                                   target_path_prefix=os.path.join(folder_path,
+    #                                                                   'pics/init_horizontal_bins_%d' % fold_number))
+    # visualization.plot_bin_vertical(model, [0, 30, 60, 90],
+    #                                 target_path=os.path.join(folder_path, 'pics/init_vertical_bins.png'))
+    #
+    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+    #                               axis='horizontal',
+    #                               target_path_prefix=os.path.join(folder_path, 'pics/init_horizontal_function_vis_'))
+    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+    #                               axis='vertical',
+    #                               target_path_prefix=os.path.join(folder_path, 'pics/init_vertical_function_vis_'))
+
     print(model.summary())
     print('Train mean', np.mean(y_train), 'Test mean', np.mean(y_valid))
-
 
     checkpoint_path = os.path.join(folder_path, 'model_' + str(fold_number))
 
@@ -121,14 +155,24 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1, save_best_only=True, mode='max'),
         EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
 
-    json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'))
+    json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'), indent=4, sort_keys=True)
 
     model.fit(X_train, y_train, batch_size=batch_size, epochs=100, shuffle=True, validation_data=(X_valid, y_valid),
               callbacks=callbacks)
 
     model.load_weights(checkpoint_path)
-    visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)), target_path_prefix=os.path.join(folder_path, 'pics/trained_%d' % fold_number))
-    
+    plot_everything(model, experiment_folder=folder_path, prefix='')
+    # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
+    #                                   target_path_prefix=os.path.join(folder_path,
+    #                                                                   'pics/horizontal_bins_%d' % fold_number))
+    # visualization.plot_bin_vertical(model, [0, 30, 60, 90],
+    #                                 target_path=os.path.join(folder_path, 'pics/vertical_bins.png'))
+    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+    #                               axis='horizontal',
+    #                               target_path_prefix=os.path.join(folder_path, 'pics/horizontal_function_vis_'))
+    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+    #                               axis='vertical',
+    #                               target_path_prefix=os.path.join(folder_path, 'pics/vertical_function_vis_'))
 
     pred = model.predict(X_validation)
     train_predictions_history.append(pred)
@@ -156,4 +200,5 @@ sub["target"] = history_to_predictions_mean(predictions_history)
 sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
 
 with open('./results.tsv', 'a') as f:
-    f.write('%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))
+    f.write(
+        '%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))

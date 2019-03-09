@@ -60,8 +60,8 @@ class DiscretizationLayerWide(Layer):
         super(DiscretizationLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        l = self.layer_config['bins_init_range']
-        u = -l
+        u = self.layer_config['bins_init_range']
+        l = -u
         bins_init = self.layer_config['bins_init']
         if bins_init == 'linspace':
             initer = [np.linspace(l, u, self.output_dim).reshape(1, -1) for _ in range(input_shape[1])]
@@ -105,7 +105,13 @@ class DiscretizationLayerWide(Layer):
     def call(self, inputs, **kwargs):
         input = tf.expand_dims(inputs, -1)
         bins = self.biases - tf.abs(input - self.bins) * self.widths
-        bins2prob = tf.nn.softmax(tf.nn.elu(bins))
+        if self.layer_config['pre_sm_dropout'] > 0.0:
+            bins = tf.nn.dropout(bins, keep_prob=1.0 - self.layer_config['pre_sm_dropout'])
+        if self.layer_config['softmax']:
+            bins2prob = tf.nn.softmax(tf.nn.elu(bins))
+            # bins2prob = tf.nn.softmax(bins)
+        else:
+            bins2prob = bins
         x = bins2prob * self.dense_weight# + self.dense_bias
         x = tf.reduce_sum(x, axis=2) + self.dense_bias
         x = tf.nn.tanh(x)
