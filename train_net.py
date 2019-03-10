@@ -69,11 +69,13 @@ def plot_everything(model, experiment_folder, prefix='', model_type='Discretizat
 
 args = experiment_utils.parse_args()
 
-configs = DeepDict({'disc_layer': {'name': None,
-                                   'bins_init': 'linspace',
-                                   'bins_init_range': 3,
-                                   'pre_sm_dropout': 0.0,
-                                   'softmax': True}})
+configs = DeepDict({'name': None,
+                    'disc_layer': {
+                        'bins_init': 'linspace',
+                        'bins_init_range': 3,
+                        'pre_sm_dropout': 0.0,
+                        'softmax': True,
+                        'bias_init': 0.0}})
 
 configs_update = json.load(open(args.configs, 'r')) if args.configs is not None else {}
 

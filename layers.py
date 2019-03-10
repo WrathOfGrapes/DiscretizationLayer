@@ -72,6 +72,8 @@ class DiscretizationLayerWide(Layer):
         else:
             raise Exception(bins_init)
 
+        bias_initializer = Constant(self.layer_config['bias_init'])
+
         width_val = 3. * float(u - l) / input_shape[1]
         super(DiscretizationLayerWide, self).build(input_shape)
         self.bins = self.add_weight(name='bins',
@@ -87,7 +89,7 @@ class DiscretizationLayerWide(Layer):
 
         self.biases = self.add_weight(name='biases',
                                       shape=(input_shape[1], self.output_dim,),
-                                      initializer=Zeros(),
+                                      initializer=bias_initializer,
                                       trainable=True)
 
         self.dense_weight = self.add_weight(name='w',
@@ -108,8 +110,8 @@ class DiscretizationLayerWide(Layer):
         if self.layer_config['pre_sm_dropout'] > 0.0:
             bins = tf.nn.dropout(bins, keep_prob=1.0 - self.layer_config['pre_sm_dropout'])
         if self.layer_config['softmax']:
-            bins2prob = tf.nn.softmax(tf.nn.elu(bins))
-            # bins2prob = tf.nn.softmax(bins)
+                bins2prob = tf.nn.softmax(tf.nn.elu(bins))
+                # bins2prob = tf.nn.softmax(bins)
         else:
             bins2prob = bins
         x = bins2prob * self.dense_weight# + self.dense_bias
