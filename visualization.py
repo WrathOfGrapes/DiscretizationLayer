@@ -5,9 +5,11 @@ import keras
 
 
 def draw_function(func, true_values=None, bounds=None, label=None):
+    """
+    Plots the `func`(x) values on a [-3, 3] grid
+    """
     # plt.clf()
     ax = plt.subplot(111)
-
     if true_values is not None:
         # plot train data distribution
         sns.distplot(true_values, ax=ax, hist=False, label=label)
@@ -22,8 +24,22 @@ def draw_function(func, true_values=None, bounds=None, label=None):
     return ax
 
 
-def plot_weights(bin, width, bias, true_values=None, label=None):
-    y_func = lambda x: bias - abs(x - bin) * width
+def plot_weights(bin, width, bias, disc_layer_configs, true_values=None, label=None):
+    """
+    Plots pre-softmax function of i-th input feature and j-th output feature
+    """
+    activation_fn = disc_layer_configs['pre_sm_activation']
+
+    def activation(x):
+        if activation_fn == 'elu':
+            return np.exp(x) - 1 if x < 0 else x
+        elif activation_fn == 'lelu':
+            return x * 0.2 if x < 0 else x
+        elif activation_fn == 'iden':
+            return x
+        else:
+            raise Exception
+    y_func = lambda x: activation(bias - abs(x - bin) * width)
     return draw_function(y_func, true_values, label=label)
 
 
@@ -72,12 +88,12 @@ def plot_all_bins_model(model, data, feature_list: list, target_path_prefix, mod
         plt.savefig(target_path_prefix + ('_%d.png' % i))
 
 
-def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases, **kwargs, ):
+def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases, disc_layer_configs, **kwargs, ):
     bin = bins[input_feature_ind, output_feature_ind]
     width = widths[input_feature_ind, output_feature_ind]
     bias = biases[input_feature_ind, output_feature_ind]
     true_values = train_data[:, input_feature_ind] if train_data is not None else None
-    return plot_weights(bin, width, bias, true_values=true_values)
+    return plot_weights(bin, width, bias, disc_layer_configs=disc_layer_configs, true_values=true_values)
 
 
 def plot_bin_vertical(model, out_feature_inds, target_path, model_type='DiscretizationLayerWide'):
@@ -90,19 +106,10 @@ def plot_bin_vertical(model, out_feature_inds, target_path, model_type='Discreti
     plt.savefig(target_path)
 
 
-def plot_presoftmax(model, data, in_feature_inds, out_feature_inds, target_path_prefix, axis='horizontal',
+def plot_presoftmax(model, data, in_feature_inds, out_feature_inds, target_path_prefix, disc_layer_configs, axis='horizontal',
                     model_type='DiscretizationLayerWide'):
     weights = get_disc_layer_weights(model, model_type=model_type)
     assert axis in ['vertical', 'horizontal']
-    # ax = plt.subplot(111)
-    # if axis == 'horizontal':
-    #     iter_1 = in_feature_inds
-    #     iter_2 = out_feature_inds
-    # elif axis == 'vertical':
-    #     iter_1 = out_feature_inds
-    #     iter_2 = in_feature_inds
-    # else:
-    #     raise Exception
 
     in_ind = 0
     out_ind = 0
@@ -115,6 +122,7 @@ def plot_presoftmax(model, data, in_feature_inds, out_feature_inds, target_path_
             plot_weights(weights['bins'][in_feature, out_feature],
                          weights['widths'][in_feature, out_feature],
                          weights['biases'][in_feature, out_feature],
+                         disc_layer_configs=disc_layer_configs,
                          true_values=data[:, in_feature] if axis == 'horizontal' else None,
                          label='%s feature=%d' % (('in', in_feature) if axis == 'vertical' else ('out', out_feature)))
             if axis == 'vertical':

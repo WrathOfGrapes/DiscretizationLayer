@@ -73,6 +73,12 @@ class DiscretizationLayerWide(Layer):
             raise Exception(bins_init)
 
         bias_initializer = Constant(self.layer_config['bias_init'])
+        if self.layer_config['pre_sm_dropout'] > 0.0:
+            self.dropout_mask = self.add_weight(name='dropout_mask',
+                                                shape=(input_shape[1], self.output_dim),
+                                                initializer=Constant(-10000),
+                                                trainable=False)
+
 
         width_val = 3. * float(u - l) / input_shape[1]
         super(DiscretizationLayerWide, self).build(input_shape)
@@ -102,16 +108,27 @@ class DiscretizationLayerWide(Layer):
                                           initializer=Zeros(),#RandomUniform(-0.1, 0.1),  # 'glorot_uniform',
                                           trainable=True)
 
+
+
         self.built = True
 
     def call(self, inputs, **kwargs):
         input = tf.expand_dims(inputs, -1)
         bins = self.biases - tf.abs(input - self.bins) * self.widths
         if self.layer_config['pre_sm_dropout'] > 0.0:
-            bins = tf.nn.dropout(bins, keep_prob=1.0 - self.layer_config['pre_sm_dropout'])
+            # we keep a large negative value with probability `keep_prob`, so technically `keep_prob` have here the opposite meaning
+            bins += tf.nn.dropout(self.dropout_mask, keep_prob=self.layer_config['pre_sm_dropout'])
+            # bins = tf.nn.dropout(bins, keep_prob=1.0 - self.layer_config['pre_sm_dropout'])
+
+        if self.layer_config['pre_sm_activation'] == 'elu':
+            bins = tf.nn.elu(bins)
+        elif self.layer_config['pre_sm_activation'] == 'lelu':
+            bins = tf.nn.leaky_relu(bins)
+        elif self.layer_config['pre_sm_activation'] == 'iden':
+            pass
+
         if self.layer_config['softmax']:
-                bins2prob = tf.nn.softmax(tf.nn.elu(bins))
-                # bins2prob = tf.nn.softmax(bins)
+                bins2prob = tf.nn.softmax(bins)
         else:
             bins2prob = bins
         x = bins2prob * self.dense_weight# + self.dense_bias

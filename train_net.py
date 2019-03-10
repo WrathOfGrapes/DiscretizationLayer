@@ -50,7 +50,7 @@ def history_to_predictions_mean(history):
     return np.mean(history, axis=1).reshape(-1)
 
 
-def plot_everything(model, experiment_folder, prefix='', model_type='DiscretizationLayerWide'):
+def plot_everything(model, configs, experiment_folder, prefix=''):
     visualization.plot_bin_vertical(model, [0, 30, 60, 90],
                                     target_path=os.path.join(experiment_folder, 'pics', 'bins_vertical.png'))
 
@@ -60,9 +60,11 @@ def plot_everything(model, experiment_folder, prefix='', model_type='Discretizat
     visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
                                       target_path_prefix=path_prefixs[0])
     visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+                                  disc_layer_configs=configs['disc_layer'],
                                   axis='horizontal',
                                   target_path_prefix=path_prefixs[1])
     visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
+                                  disc_layer_configs=configs['disc_layer'],
                                   axis='vertical',
                                   target_path_prefix=path_prefixs[2])
 
@@ -75,7 +77,9 @@ configs = DeepDict({'name': None,
                         'bins_init_range': 3,
                         'pre_sm_dropout': 0.0,
                         'softmax': True,
-                        'bias_init': 0.0}})
+                        'bias_init': 0.0,
+                        'pre_sm_activation': 'elu',
+                    }})
 
 configs_update = json.load(open(args.configs, 'r')) if args.configs is not None else {}
 
@@ -88,7 +92,7 @@ pprint(configs)
 experiment_name = args.name or configs['name'] or (
     os.path.split(args.configs)[-1].split('.')[0] if args.configs else None)
 
-folder_name = experiment_utils.create_experiment_folder(args.name or configs['name'])
+folder_name = experiment_utils.create_experiment_folder(experiment_name)
 folder_path = os.path.join('runs', folder_name)
 
 n_fold = 5 if args.prod else 1
@@ -133,7 +137,7 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
 
     model, local_model = make_net(ld, 1e-3, configs=configs)
 
-    plot_everything(model, experiment_folder=folder_path, prefix='init_')
+    plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
     # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
     #                                   target_path_prefix=os.path.join(folder_path,
     #                                                                   'pics/init_horizontal_bins_%d' % fold_number))
@@ -159,11 +163,11 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
 
     json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'), indent=4, sort_keys=True)
 
-    model.fit(X_train, y_train, batch_size=batch_size, epochs=100, shuffle=True, validation_data=(X_valid, y_valid),
+    model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_valid, y_valid),
               callbacks=callbacks)
 
     model.load_weights(checkpoint_path)
-    plot_everything(model, experiment_folder=folder_path, prefix='')
+    plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='')
     # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
     #                                   target_path_prefix=os.path.join(folder_path,
     #                                                                   'pics/horizontal_bins_%d' % fold_number))
