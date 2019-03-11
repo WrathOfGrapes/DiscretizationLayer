@@ -8,6 +8,7 @@ def parse_args():
     parser.add_argument("-f", "--fold", type=int, default=1, help="Train net on 5 folds without validation set (for kagle submission)")
     parser.add_argument("-s", "--submission", action='store_true', help="Create kaggle submission")
     parser.add_argument("-v", "--validation", action='store_true', help="Use validation dataset")
+    parser.add_argument("--silent", action='store_true', help="Work in silent mode")
     parser.add_argument("-c", "--config", type=str, default=None, help="Path to config file")
     parser.add_argument("-n", "--name", type=str, default=None, help='Experiment name. Default: time in {HH:MM:SS} format')
     parser.add_argument("-lr", type=float, default=5e-3, help="Learning rate")

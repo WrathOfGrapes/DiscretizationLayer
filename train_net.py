@@ -1,3 +1,17 @@
+from __future__ import print_function
+
+
+def warn(*args, **kwargs):
+    pass
+
+
+import warnings
+warnings.warn = warn
+
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import pandas as pd
 import numpy as np
 
@@ -20,11 +34,9 @@ import json
 from deep_dict import DeepDict
 
 from keras import backend as K
-import os
 import time
 from pprint import pprint
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def history_to_predictions(history):
@@ -77,6 +89,7 @@ submission = args.submission
 validation = args.validation
 lr = args.lr
 dimension = args.dimension
+verbose = not args.silent
 
 configs = DeepDict({'name': None,
                     'disc_layer': {
@@ -92,8 +105,9 @@ configs_update = json.load(open(config, 'r')) if config is not None else {}
 
 configs.merge(configs_update)
 
-print('Final config file:')
-pprint(configs)
+if verbose:
+    print('Final config file:')
+    pprint(configs)
 
 # Choosing name. Priorities: name from command line > name in configs > name of the config file
 experiment_name = name or configs['name'] or (
@@ -102,7 +116,8 @@ experiment_name = name or configs['name'] or (
 folder_name = experiment_utils.create_experiment_folder(experiment_name)
 folder_path = os.path.join('runs', folder_name)
 
-
+if verbose:
+    print('Loading data')
 data = pd.read_csv('./data/train.csv')
 X = data.drop(columns=['ID_code', 'target']).values
 y = data['target'].values
@@ -125,7 +140,7 @@ else:
 batch_size = 1000
 
 
-def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False):
+def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False, verbose=False):
     print('Fold', fold_number + 1, 'started at', time.ctime())
     K.clear_session()
 
@@ -138,24 +153,38 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False)
 
     model, local_model = make_net(ld, lr, configs=configs)
 
+    if verbose:
+        print_list = ['TR {:6.3f}%'.format(100 * np.mean(y_train)),
+                      'TS {:6.3f}%'.format(100 * np.mean(y_test))]
+        if validation is not None:
+            print_list.append('VAL {:6.3f}%'.format(100 * np.mean(y_validation)))
+        print(' '.join(print_list))
+
     if plot:
         plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
 
-    print(model.summary())
-    print('Train mean', np.mean(y_train), 'Test mean', np.mean(y_test), 'Validation mean', np.mean(y_validation))
-
     checkpoint_path = os.path.join(folder_path, 'model_' + str(fold_number))
+    if verbose:
+        print('Checkpoint at', checkpoint_path)
 
     callbacks = [
-        IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1),
-        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=3, min_lr=5e-5, verbose=1, mode='max'),
-        ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1, save_best_only=True, mode='max'),
-        EarlyStopping(patience=20, monitor='val_auroc', mode='max')]
+        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=3, min_lr=5e-5, verbose=1 if verbose else 0,
+                          mode='max'),
+        ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1 if verbose else 0, save_best_only=True,
+                        mode='max'),
+        EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
 
-    model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_test, y_test),
-              callbacks=callbacks)
+    if verbose:
+        callbacks.append(IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1))
+
+    try:
+        model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_test, y_test),
+                  callbacks=callbacks, verbose=1 if verbose else 2)
+    except KeyboardInterrupt:
+        pass
 
     model.load_weights(checkpoint_path)
+
     if plot:
         plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='')
 
@@ -167,6 +196,9 @@ if submission:
     test_predictions_history = []
 if validation:
     validation_predictions_history = []
+
+if verbose:
+    print('Training')
 
 if n_fold > 1:
     iterator = enumerate(StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=42).split(X, y))
@@ -182,14 +214,16 @@ for fold_n, (train_index, test_index) in iterator:
                         lr,
                         dimension,
                         validation=(X_validation, y_validation),
-                        fold_number=fold_n)
+                        fold_number=fold_n,
+                        verbose=verbose)
     train_predictions_history.append(model.predict(X))
-    print('TOTAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(train_predictions_history)))
-    print('TRAIN ROC AUC', roc_auc_score(y_train, model.predict(X_train).reshape(-1)))
-    print('TEST  ROC AUC', roc_auc_score(y_test, model.predict(X_test).reshape(-1)))
+    if verbose:
+        print('TOTAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(train_predictions_history)))
+        print('TRAIN ROC AUC', roc_auc_score(y_train, model.predict(X_train).reshape(-1)))
+        print('TEST  ROC AUC', roc_auc_score(y_test, model.predict(X_test).reshape(-1)))
     if validation:
         validation_predictions_history.append(model.predict(X_validation))
-        print('VAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(validation_predictions_history)))
+        print('VAL ROC AUC', roc_auc_score(y_validation, history_to_predictions_mean(validation_predictions_history)))
     if submission:
         test_predictions_history.append(model.predict(test))
 
