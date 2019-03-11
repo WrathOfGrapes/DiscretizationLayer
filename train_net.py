@@ -70,6 +70,13 @@ def plot_everything(model, configs, experiment_folder, prefix=''):
 
 
 args = experiment_utils.parse_args()
+n_fold = args.fold
+config = args.config
+name = args.name
+submission = args.submission
+validation = args.validation
+lr = args.lr
+dimension = args.dimension
 
 configs = DeepDict({'name': None,
                     'disc_layer': {
@@ -78,10 +85,10 @@ configs = DeepDict({'name': None,
                         'pre_sm_dropout': 0.0,
                         'softmax': True,
                         'bias_init': 0.0,
-                        'pre_sm_activation': 'elu',
+                        'pre_sm_activation': 'lelu',
                     }})
 
-configs_update = json.load(open(args.configs, 'r')) if args.configs is not None else {}
+configs_update = json.load(open(config, 'r')) if config is not None else {}
 
 configs.merge(configs_update)
 
@@ -89,24 +96,16 @@ print('Final config file:')
 pprint(configs)
 
 # Choosing name. Priorities: name from command line > name in configs > name of the config file
-experiment_name = args.name or configs['name'] or (
-    os.path.split(args.configs)[-1].split('.')[0] if args.configs else None)
+experiment_name = name or configs['name'] or (
+    os.path.split(config)[-1].split('.')[0] if config else None)
 
 folder_name = experiment_utils.create_experiment_folder(experiment_name)
 folder_path = os.path.join('runs', folder_name)
 
-n_fold = 5 if args.prod else 1
 
-if n_fold == 1:
-    data = pd.read_csv('./data/data_train.csv')
-else:
-    data = pd.read_csv('./data/data_train.csv')
+data = pd.read_csv('./data/train.csv')
 X = data.drop(columns=['ID_code', 'target']).values
 y = data['target'].values
-
-data_val = pd.read_csv('./data/data_test.csv')
-X_validation = data_val.drop(columns=['ID_code', 'target']).values
-y_validation = data_val['target'].values
 
 test_df = pd.read_csv('./data/test.csv')
 test = test_df.drop(columns=['ID_code']).values
@@ -116,96 +115,90 @@ scaler.fit(np.concatenate([X, test], axis=0))
 
 test = scaler.transform(test)
 X = scaler.transform(X)
-X_validation = scaler.transform(X_validation)
 
-ld = 100
+if validation:
+    X, X_validation, y, y_validation = train_test_split(X, y, train_size=0.875, random_state=13)
+else:
+    X_validation = None
+    y_validation = None
 
-if n_fold > 1:
-    folds = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=42)
-
-prediction = np.zeros(len(test))
-predictions_history = []
-train_prediction = np.zeros(len(X_validation))
-train_predictions_history = []
-
-batch_size = 1024
+batch_size = 1000
 
 
-def train_model(X_train, y_train, X_valid, y_valid, fold_number):
+def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False):
     print('Fold', fold_number + 1, 'started at', time.ctime())
     K.clear_session()
 
-    model, local_model = make_net(ld, 1e-3, configs=configs)
+    X_train, y_train = train
+    X_test, y_test = test
+    if validation is not None:
+        X_validation, y_validation = validation
+    else:
+        X_validation, y_validation = test
 
-    #plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
-    # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
-    #                                   target_path_prefix=os.path.join(folder_path,
-    #                                                                   'pics/init_horizontal_bins_%d' % fold_number))
-    # visualization.plot_bin_vertical(model, [0, 30, 60, 90],
-    #                                 target_path=os.path.join(folder_path, 'pics/init_vertical_bins.png'))
-    #
-    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
-    #                               axis='horizontal',
-    #                               target_path_prefix=os.path.join(folder_path, 'pics/init_horizontal_function_vis_'))
-    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
-    #                               axis='vertical',
-    #                               target_path_prefix=os.path.join(folder_path, 'pics/init_vertical_function_vis_'))
+    model, local_model = make_net(ld, lr, configs=configs)
+
+    if plot:
+        plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
 
     print(model.summary())
-    print('Train mean', np.mean(y_train), 'Test mean', np.mean(y_valid))
+    print('Train mean', np.mean(y_train), 'Test mean', np.mean(y_test), 'Validation mean', np.mean(y_validation))
 
     checkpoint_path = os.path.join(folder_path, 'model_' + str(fold_number))
 
     callbacks = [
         IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1),
-        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=5, min_lr=1e-6, verbose=1, mode='max'),
+        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=3, min_lr=5e-5, verbose=1, mode='max'),
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1, save_best_only=True, mode='max'),
-        EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
+        EarlyStopping(patience=20, monitor='val_auroc', mode='max')]
 
-    #json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'), indent=4, sort_keys=True)
-
-    model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_valid, y_valid),
+    model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_test, y_test),
               callbacks=callbacks)
 
     model.load_weights(checkpoint_path)
-    plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='')
-    # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
-    #                                   target_path_prefix=os.path.join(folder_path,
-    #                                                                   'pics/horizontal_bins_%d' % fold_number))
-    # visualization.plot_bin_vertical(model, [0, 30, 60, 90],
-    #                                 target_path=os.path.join(folder_path, 'pics/vertical_bins.png'))
-    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
-    #                               axis='horizontal',
-    #                               target_path_prefix=os.path.join(folder_path, 'pics/horizontal_function_vis_'))
-    # visualization.plot_presoftmax(model, X, in_feature_inds=range(0, 100, 10), out_feature_inds=range(0, 100, 10),
-    #                               axis='vertical',
-    #                               target_path_prefix=os.path.join(folder_path, 'pics/vertical_function_vis_'))
+    if plot:
+        plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='')
 
-    pred = model.predict(X_validation)
-    train_predictions_history.append(pred)
+    return model
 
-    print('ROC AUC CURR', roc_auc_score(y_valid, model.predict(X_valid).reshape(-1)))
-    print('ROC AUC FULL', roc_auc_score(y_validation, pred.reshape(-1)))
-    print('ROC AUC MAX ', roc_auc_score(y_validation, history_to_predictions(train_predictions_history)))
-    print('ROC AUC MEAN', roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history)))
 
-    predictions_history.append(model.predict(test))
-
+train_predictions_history = []
+if submission:
+    test_predictions_history = []
+if validation:
+    validation_predictions_history = []
 
 if n_fold > 1:
-    for fold_n, (train_index, valid_index) in enumerate(folds.split(X, y)):
-        X_train, X_valid = X[train_index], X[valid_index]
-        y_train, y_valid = y[train_index], y[valid_index]
-        train_model(X_train, y_train, X_valid, y_valid, fold_n)
+    iterator = enumerate(StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=42).split(X, y))
 else:
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, train_size=160000, random_state=27)
-    train_model(X_train, y_train, X_valid, y_valid, 0)
+    ind_train, ind_test = train_test_split(list(range(len(X))), test_size=25000, random_state=23)
+    iterator = [(0, (ind_train, ind_test))]
 
-print('Submission')
-sub = pd.DataFrame({"ID_code": test_df.ID_code.values})
-sub["target"] = history_to_predictions_mean(predictions_history)
-sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
+for fold_n, (train_index, test_index) in iterator:
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+    model = train_model((X_train, y_train),
+                        (X_test, y_test),
+                        lr,
+                        dimension,
+                        validation=(X_validation, y_validation),
+                        fold_number=fold_n)
+    train_predictions_history.append(model.predict(X))
+    print('TOTAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(train_predictions_history)))
+    print('TRAIN ROC AUC', roc_auc_score(y_train, model.predict(X_train).reshape(-1)))
+    print('TEST  ROC AUC', roc_auc_score(y_test, model.predict(X_test).reshape(-1)))
+    if validation:
+        validation_predictions_history.append(model.predict(X_validation))
+        print('VAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(validation_predictions_history)))
+    if submission:
+        test_predictions_history.append(model.predict(test))
 
-with open('./results.tsv', 'a') as f:
-    f.write(
-        '%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))
+if submission:
+    print('Submission')
+    sub = pd.DataFrame({"ID_code": test_df.ID_code.values})
+    sub["target"] = history_to_predictions_mean(test_predictions_history)
+    sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
+
+#with open('./results.tsv', 'a') as f:
+#    f.write(
+#        '%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))

@@ -240,7 +240,7 @@ def page_rank_good_neg_loss(y_true, y_pred):
     # Rebalance classes, so now equal probability is 1 - alpha
     alpha = tf.reduce_mean(y_true)
     gap = alpha / 10
-    threshold_pos = 1 - alpha + gap  # 1 - alpha + gap / 2
+    threshold_pos = 1 - alpha + gap
     threshold_neg = 1 - alpha - gap
     target_balance = 0.5
 
@@ -249,13 +249,8 @@ def page_rank_good_neg_loss(y_true, y_pred):
     neg_pos_normed = target_balance + (1 - target_balance) * ((neg - threshold_neg) / (1. - threshold_neg))
     pos_pos_normed = target_balance + (1 - target_balance) * ((pos - threshold_pos) / (1. - threshold_pos))
 
-    neg_neg_normed = tf.where(neg < threshold_neg, neg_neg_normed, tf.zeros_like(neg))
-    neg_pos_normed = tf.where(neg >= threshold_neg, neg_pos_normed, tf.zeros_like(neg))
-    pos_neg_normed = tf.where(pos < threshold_pos, pos_neg_normed, tf.zeros_like(pos))
-    pos_pos_normed = tf.where(pos >= threshold_pos, pos_pos_normed, tf.zeros_like(pos))
-
-    pos_rebalanced = pos_pos_normed + pos_neg_normed
-    neg_rebalanced = neg_neg_normed + neg_pos_normed
+    neg_rebalanced = tf.where(neg < threshold_neg, neg_neg_normed, neg_pos_normed)
+    pos_rebalanced = tf.where(pos < threshold_pos, pos_neg_normed, pos_pos_normed)
 
     pos_exp = tf.expand_dims(pos, 0)
     neg_exp = tf.expand_dims(neg, 1)
@@ -320,6 +315,35 @@ def page_rank_good_neg_loss(y_true, y_pred):
 
     loss = pos_percentage * tf.reduce_sum(pos_bce * pos_ratings) + \
            (1 - pos_percentage) * tf.reduce_sum(neg_bce * neg_ratings)
+
+    return loss
+
+
+def shifted_bce(y_true, y_pred):
+    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
+    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
+
+    # Rebalance classes, so now equal probability is 1 - alpha
+    alpha = tf.reduce_mean(y_true)
+    pos_percentage = tf.reduce_mean(y_true)
+    gap = alpha / 20
+    threshold_pos = 1 - alpha + gap # 1 - alpha + gap / 2
+    threshold_neg = 1 - alpha - gap
+    target_balance = 0.5
+    #pos_percentage *= 2
+
+    neg_neg_normed = neg * target_balance / threshold_neg
+    pos_neg_normed = pos * target_balance / threshold_pos
+    neg_pos_normed = target_balance + (1 - target_balance) * ((neg - threshold_neg) / (1. - threshold_neg))
+    pos_pos_normed = target_balance + (1 - target_balance) * ((pos - threshold_pos) / (1. - threshold_pos))
+
+    neg_rebalanced = tf.where(neg < threshold_neg, neg_neg_normed, neg_pos_normed)
+    pos_rebalanced = tf.where(pos < threshold_pos, pos_neg_normed, pos_pos_normed)
+
+    pos_bce = -1 * tf.log(K.epsilon() + pos_rebalanced)
+    neg_bce = -1 * tf.log(K.epsilon() + 1 - neg_rebalanced)
+
+    loss = pos_percentage * tf.reduce_mean(pos_bce) + (1 - pos_percentage) * tf.reduce_mean(neg_bce)
 
     return loss
 
@@ -424,7 +448,7 @@ def make_net(ld, lr, configs):
 
     model = Model(input=input, output=next)
 
-    model.compile(optimizer=Adam(lr=lr), loss=page_rank_good_neg_loss, metrics=[auroc, 'accuracy'])
+    model.compile(optimizer=Adam(lr=lr), loss=shifted_bce, metrics=[auroc, 'accuracy'])
     #model.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=[auroc, 'accuracy'])
 
     return model, local_model

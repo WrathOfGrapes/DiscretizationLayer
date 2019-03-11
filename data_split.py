@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 data = pd.read_csv('./data/train.csv')
 
-indicies_train, indicies_test = train_test_split(range(len(data)), train_size=180000, random_state=67)
+indicies_train, indicies_test = train_test_split(range(len(data)), train_size=0.875, random_state=173)
 
 
 data_train = data.iloc[indicies_train]

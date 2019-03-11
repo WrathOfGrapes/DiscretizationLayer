@@ -44,8 +44,8 @@ class DiscretizationLayer(Layer):
     def call(self, inputs, **kwargs):
         x = tf.expand_dims(inputs, -1)
         bins = self.biases - tf.abs(x - self.bins) * self.widths
-        bins2prob = tf.nn.softmax(bins)
-        x = bins2prob * x
+        bins2prob = tf.nn.softmax(tf.nn.elu(bins))
+        x = bins2prob#* x
         x = tf.reduce_mean(x, axis=1)
         return x
 
@@ -117,8 +117,7 @@ class DiscretizationLayerWide(Layer):
         bins = self.biases - tf.abs(input - self.bins) * self.widths
         if self.layer_config['pre_sm_dropout'] > 0.0:
             # we keep a large negative value with probability `keep_prob`, so technically `keep_prob` have here the opposite meaning
-            bins += tf.nn.dropout(self.dropout_mask, keep_prob=self.layer_config['pre_sm_dropout'])
-            # bins = tf.nn.dropout(bins, keep_prob=1.0 - self.layer_config['pre_sm_dropout'])
+            bins += l.Dropout(1 - self.layer_config['pre_sm_dropout'])(self.dropout_mask)
 
         if self.layer_config['pre_sm_activation'] == 'elu':
             bins = tf.nn.elu(bins)
@@ -131,12 +130,10 @@ class DiscretizationLayerWide(Layer):
                 bins2prob = tf.nn.softmax(bins)
         else:
             bins2prob = bins
-        x = bins2prob * self.dense_weight# + self.dense_bias
+        x = bins2prob * self.dense_weight
         x = tf.reduce_sum(x, axis=2) + self.dense_bias
         x = tf.nn.tanh(x)
-        #x = x * inputs
         return x
-
 
     def compute_output_shape(self, input_shape):
         return input_shape

@@ -5,9 +5,13 @@ import os
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--prod", type=bool, default=False, help="Train net on 5 folds without validation set (for kagle submission)")
-    parser.add_argument('-c', dest='configs', type=str, default=None, help="Path to config file")
-    parser.add_argument('-name', type=str, default=None, help='Experiment name. Default: time in {HH:MM:SS} format')
+    parser.add_argument("-f", "--fold", type=int, default=1, help="Train net on 5 folds without validation set (for kagle submission)")
+    parser.add_argument("-s", "--submission", action='store_true', help="Create kaggle submission")
+    parser.add_argument("-v", "--validation", action='store_true', help="Use validation dataset")
+    parser.add_argument("-c", "--config", type=str, default=None, help="Path to config file")
+    parser.add_argument("-n", "--name", type=str, default=None, help='Experiment name. Default: time in {HH:MM:SS} format')
+    parser.add_argument("-lr", type=float, default=5e-3, help="Learning rate")
+    parser.add_argument("-d", "--dimension", type=int, default=100, help="Internal dimension")
     return parser.parse_args()
 
 
