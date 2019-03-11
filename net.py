@@ -233,6 +233,97 @@ def sliding_wmw_loss(y_true, y_pred):
     return tf.reduce_mean(difference * (1 - diff_vector))
 
 
+def page_rank_good_neg_loss(y_true, y_pred):
+    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
+    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
+
+    # Rebalance classes, so now equal probability is 1 - alpha
+    alpha = tf.reduce_mean(y_true)
+    gap = alpha / 10
+    threshold_pos = 1 - alpha + gap  # 1 - alpha + gap / 2
+    threshold_neg = 1 - alpha - gap
+    target_balance = 0.5
+
+    neg_neg_normed = neg * target_balance / threshold_neg
+    pos_neg_normed = pos * target_balance / threshold_pos
+    neg_pos_normed = target_balance + (1 - target_balance) * ((neg - threshold_neg) / (1. - threshold_neg))
+    pos_pos_normed = target_balance + (1 - target_balance) * ((pos - threshold_pos) / (1. - threshold_pos))
+
+    neg_neg_normed = tf.where(neg < threshold_neg, neg_neg_normed, tf.zeros_like(neg))
+    neg_pos_normed = tf.where(neg >= threshold_neg, neg_pos_normed, tf.zeros_like(neg))
+    pos_neg_normed = tf.where(pos < threshold_pos, pos_neg_normed, tf.zeros_like(pos))
+    pos_pos_normed = tf.where(pos >= threshold_pos, pos_pos_normed, tf.zeros_like(pos))
+
+    pos_rebalanced = pos_pos_normed + pos_neg_normed
+    neg_rebalanced = neg_neg_normed + neg_pos_normed
+
+    pos_exp = tf.expand_dims(pos, 0)
+    neg_exp = tf.expand_dims(neg, 1)
+
+    pos_percentage = tf.reduce_mean(y_true)
+
+    difference = tf.zeros_like(pos_exp * neg_exp) + pos_exp - neg_exp
+    difference_errors = tf.where(difference <= 0, tf.ones_like(difference), tf.zeros_like(difference))
+
+    difference_correct = tf.where(difference > 0, tf.ones_like(difference), tf.zeros_like(difference))
+
+    normalize = lambda x: x / (K.epsilon() + tf.reduce_sum(x))
+
+    error_pos = normalize(tf.ones_like(pos))
+    error_neg = normalize(tf.ones_like(neg))
+
+    correct_pos = normalize(tf.ones_like(pos))
+    correct_neg = normalize(tf.ones_like(neg))
+
+    iterations = 50
+
+    for i in range(iterations):
+        normed_neg_difference_errors = difference_errors / \
+                                       (K.epsilon() + tf.reduce_sum(difference_errors, axis=0, keepdims=True))
+        err_positive_ratings = tf.matmul(tf.transpose(normed_neg_difference_errors), tf.expand_dims(error_neg, 1))
+        err_positive_ratings = tf.squeeze(err_positive_ratings)
+
+        normed_pos_difference_errors = difference_errors / \
+                                       (K.epsilon() + tf.reduce_sum(difference_errors, axis=1, keepdims=True))
+        err_negative_ratings = tf.matmul(normed_pos_difference_errors, tf.expand_dims(error_pos, 1))
+        err_negative_ratings = tf.squeeze(err_negative_ratings)
+
+        error_pos = normalize(error_pos + err_positive_ratings)
+        error_neg = normalize(error_neg + err_negative_ratings)
+
+        normed_pos_difference_correct = difference_correct/ \
+                                        (K.epsilon() + tf.reduce_sum(difference_correct, axis=0, keepdims=True))
+        corr_positive_ratings = tf.matmul(tf.transpose(normed_pos_difference_correct),
+                                          tf.expand_dims(correct_neg, 1))
+        corr_positive_ratings = tf.squeeze(corr_positive_ratings)
+
+        normed_neg_difference_correct = difference_correct / \
+                                        (K.epsilon() + tf.reduce_sum(difference_correct, axis=1, keepdims=True))
+        corr_negative_ratings = tf.matmul(normed_neg_difference_correct,
+                                          tf.expand_dims(correct_pos, 1))
+        corr_negative_ratings = tf.squeeze(corr_negative_ratings)
+
+        correct_pos = normalize(correct_pos + corr_positive_ratings)
+        correct_neg += normalize(correct_neg + corr_negative_ratings)
+
+    correct_pos /= pos_percentage
+    error_pos /= pos_percentage
+
+    correct_neg /= 1 - pos_percentage
+    error_neg /= 1 - pos_percentage
+
+    pos_ratings = normalize(tf.sqrt(correct_pos * error_pos))
+    neg_ratings = normalize(tf.sqrt(correct_neg * error_neg))
+
+    pos_bce = -1 * tf.log(K.epsilon() + pos_rebalanced)
+    neg_bce = -1 * tf.log(K.epsilon() + 1 - neg_rebalanced)
+
+    loss = pos_percentage * tf.reduce_sum(pos_bce * pos_ratings) + \
+           (1 - pos_percentage) * tf.reduce_sum(neg_bce * neg_ratings)
+
+    return loss
+
+
 class IntervalEvaluation(Callback):
     def __init__(self, validation_data=(), interval=10):
         super(Callback, self).__init__()
@@ -333,7 +424,7 @@ def make_net(ld, lr, configs):
 
     model = Model(input=input, output=next)
 
-    model.compile(optimizer=Adam(lr=lr), loss=some_loss, metrics=[auroc, 'accuracy'])
+    model.compile(optimizer=Adam(lr=lr), loss=page_rank_good_neg_loss, metrics=[auroc, 'accuracy'])
     #model.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=[auroc, 'accuracy'])
 
     return model, local_model

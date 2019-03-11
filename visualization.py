@@ -43,7 +43,7 @@ def plot_weights(bin, width, bias, disc_layer_configs, true_values=None, label=N
     return draw_function(y_func, true_values, label=label)
 
 
-def get_weight_by_name(model: keras.models.Model, name):
+def get_weight_by_name(model, name):
     ind = None
     for i, weight in enumerate(model.trainable_weights):
         if weight.name == name:
@@ -53,7 +53,7 @@ def get_weight_by_name(model: keras.models.Model, name):
     return model.get_weights()[ind]
 
 
-def get_disc_layer_weights(model: keras.models.Model, model_type: str = 'DiscretizationLayerWide'):
+def get_disc_layer_weights(model, model_type='DiscretizationLayerWide'):
     if model_type == 'DiscretizationLayerWide':
         n2n = {'bins': 'discretization_layer_wide_1/bins:0',
                "widths": 'discretization_layer_wide_1/widths:0',
@@ -80,7 +80,7 @@ def plot_all_bins(bins, true_values, bounds=None):
     return ax
 
 
-def plot_all_bins_model(model, data, feature_list: list, target_path_prefix, model_type='DiscretizationLayerWide', ):
+def plot_all_bins_model(model, data, feature_list, target_path_prefix, model_type='DiscretizationLayerWide', ):
     weights = get_disc_layer_weights(model, model_type=model_type)
     for i in feature_list:
         plt.clf()
@@ -88,7 +88,7 @@ def plot_all_bins_model(model, data, feature_list: list, target_path_prefix, mod
         plt.savefig(target_path_prefix + ('_%d.png' % i))
 
 
-def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases, disc_layer_configs, **kwargs, ):
+def plot_dist(input_feature_ind, output_feature_ind, train_data, bins, widths, biases, disc_layer_configs, **kwargs):
     bin = bins[input_feature_ind, output_feature_ind]
     width = widths[input_feature_ind, output_feature_ind]
     bias = biases[input_feature_ind, output_feature_ind]

@@ -100,7 +100,7 @@ n_fold = 5 if args.prod else 1
 if n_fold == 1:
     data = pd.read_csv('./data/data_train.csv')
 else:
-    data = pd.read_csv('./data/train.csv')
+    data = pd.read_csv('./data/data_train.csv')
 X = data.drop(columns=['ID_code', 'target']).values
 y = data['target'].values
 
@@ -137,7 +137,7 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
 
     model, local_model = make_net(ld, 1e-3, configs=configs)
 
-    plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
+    #plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
     # visualization.plot_all_bins_model(model, X_train, feature_list=list(range(10)),
     #                                   target_path_prefix=os.path.join(folder_path,
     #                                                                   'pics/init_horizontal_bins_%d' % fold_number))
@@ -156,12 +156,13 @@ def train_model(X_train, y_train, X_valid, y_valid, fold_number):
 
     checkpoint_path = os.path.join(folder_path, 'model_' + str(fold_number))
 
-    callbacks = callbacks = [
+    callbacks = [
+        IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1),
         ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=5, min_lr=1e-6, verbose=1, mode='max'),
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1, save_best_only=True, mode='max'),
         EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
 
-    json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'), indent=4, sort_keys=True)
+    #json.dump(configs, open(os.path.join(folder_path, 'configs.json'), 'w'), indent=4, sort_keys=True)
 
     model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_valid, y_valid),
               callbacks=callbacks)
@@ -197,7 +198,7 @@ if n_fold > 1:
         y_train, y_valid = y[train_index], y[valid_index]
         train_model(X_train, y_train, X_valid, y_valid, fold_n)
 else:
-    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2, random_state=27)
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, train_size=160000, random_state=27)
     train_model(X_train, y_train, X_valid, y_valid, 0)
 
 print('Submission')

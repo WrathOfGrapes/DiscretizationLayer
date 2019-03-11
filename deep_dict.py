@@ -4,7 +4,7 @@ from pprint import pprint
 class DeepDict(dict):
 
     @staticmethod
-    def _merge(a:dict, b : dict, path=None):
+    def _merge(a, b, path=None):
             "merges b into a"
             if path is None: path = []
             for key in b:
@@ -19,7 +19,7 @@ class DeepDict(dict):
                     a[key] = b[key]
             return a
 
-    def merge(self, update_dict:dict):
+    def merge(self, update_dict):
         return DeepDict._merge(self, update_dict)
 
 

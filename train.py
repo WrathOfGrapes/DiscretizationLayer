@@ -31,7 +31,7 @@ dataset = datasets[dataset_name](rows=200000)
 
 model, model_data = models[model_name](dataset.input_shape, dataset.output_shape, 256)
 
-X_train, X_test, y_train, y_test = train_test_split(dataset.X, dataset.y, train_size=0.8)
+X_train, X_test, y_train, y_test = train_test_split(dataset.X, dataset.y, train_size=0.8, random_state=57)
 
 path = './' + dataset_name + '_' + model_name
 
