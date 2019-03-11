@@ -79,7 +79,6 @@ class DiscretizationLayerWide(Layer):
                                                 initializer=Constant(-10000),
                                                 trainable=False)
 
-
         width_val = 3. * float(u - l) / input_shape[1]
         super(DiscretizationLayerWide, self).build(input_shape)
         self.bins = self.add_weight(name='bins',
@@ -130,9 +129,9 @@ class DiscretizationLayerWide(Layer):
         elif self.layer_config['pre_sm_activation'] == 'iden':
             pass
 
-        if self.layer_config['softmax'] == 'softmax':
+        if self.layer_config['probability'] == 'softmax':
             bins2prob = tf.nn.softmax(bins)
-        elif self.layer_config['softmax'] == 'sigmoid':
+        elif self.layer_config['probability'] == 'sigmoid':
             bins2prob = tf.nn.sigmoid(bins)
             bins2prob /= K.epsilon() + tf.reduce_sum(bins2prob, axis=2, keep_dims=True)
         else:

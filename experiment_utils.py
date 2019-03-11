@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument("--silent", action='store_true', help="Work in silent mode")
     parser.add_argument("-c", "--config", type=str, default=None, help="Path to config file")
     parser.add_argument("-n", "--name", type=str, default=None, help='Experiment name. Default: time in {HH:MM:SS} format')
-    parser.add_argument("-lr", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("-lr", type=float, default=2e-4, help="Learning rate")
     parser.add_argument("-d", "--dimension", type=int, default=100, help="Internal dimension")
     return parser.parse_args()
 

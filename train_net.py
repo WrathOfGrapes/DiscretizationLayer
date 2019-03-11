@@ -90,7 +90,7 @@ configs = DeepDict({'name': None,
                         'bins_init': 'linspace',
                         'bins_init_range': 3,
                         'pre_sm_dropout': 0.0,
-                        'softmax': 'softmax',
+                        'probability': 'softmax',
                         'bias_init': 0.0,
                         'pre_sm_activation': 'lelu',
                     }})
@@ -161,11 +161,9 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
         print('Checkpoint at', checkpoint_path)
 
     callbacks = [
-        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=4, min_lr=5e-5, verbose=1 if verbose else 0,
-                          mode='max'),
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', save_best_only=True,
                         mode='max'),
-        EarlyStopping(patience=15, monitor='val_auroc', mode='max')]
+        EarlyStopping(patience=45, monitor='val_auroc', mode='max')]
 
     if verbose:
         if should_validate:
