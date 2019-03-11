@@ -90,7 +90,7 @@ configs = DeepDict({'name': None,
                         'bins_init': 'linspace',
                         'bins_init_range': 3,
                         'pre_sm_dropout': 0.0,
-                        'softmax': True,
+                        'softmax': 'softmax',
                         'bias_init': 0.0,
                         'pre_sm_activation': 'lelu',
                     }})
@@ -188,10 +188,8 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
 
 
 train_predictions_history = []
-if submission:
-    test_predictions_history = []
-if validation:
-    validation_predictions_history = []
+test_predictions_history = []
+validation_predictions_history = []
 
 if verbose:
     print('Training')
@@ -228,7 +226,3 @@ if submission:
     sub = pd.DataFrame({"ID_code": test_df.ID_code.values})
     sub["target"] = history_to_predictions_mean(test_predictions_history)
     sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
-
-#with open('./results.tsv', 'a') as f:
-#    f.write(
-#        '%s\t%f\n' % (folder_name, roc_auc_score(y_validation, history_to_predictions_mean(train_predictions_history))))

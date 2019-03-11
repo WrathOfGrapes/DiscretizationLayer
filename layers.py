@@ -123,11 +123,18 @@ class DiscretizationLayerWide(Layer):
             bins = tf.nn.elu(bins)
         elif self.layer_config['pre_sm_activation'] == 'lelu':
             bins = tf.nn.leaky_relu(bins)
+        elif self.layer_config['pre_sm_activation'] == 'relu':
+            bins = tf.nn.relu(bins)
+        elif self.layer_config['pre_sm_activation'] == 'selu':
+            bins = tf.nn.selu(bins)
         elif self.layer_config['pre_sm_activation'] == 'iden':
             pass
 
-        if self.layer_config['softmax']:
-                bins2prob = tf.nn.softmax(bins)
+        if self.layer_config['softmax'] == 'softmax':
+            bins2prob = tf.nn.softmax(bins)
+        elif self.layer_config['softmax'] == 'sigmoid':
+            bins2prob = tf.nn.sigmoid(bins)
+            bins2prob /= K.epsilon() + tf.reduce_sum(bins2prob, axis=2, keep_dims=True)
         else:
             bins2prob = bins
         x = bins2prob * self.dense_weight

@@ -15,63 +15,6 @@ import numpy as np
 from keras_metrics import f1_score
 
 
-def deep_cancer_loss(y_true, y_pred):
-
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    pos = tf.cond(tf.is_nan(tf.reduce_mean(pos)), lambda: tf.constant(1, dtype=pos.dtype, shape=(1,)), lambda: pos)
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-    neg = tf.cond(tf.is_nan(tf.reduce_mean(neg)), lambda: tf.constant(0, dtype=neg.dtype, shape=(1,)), lambda: neg)
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    difference = tf.zeros_like(tf.matmul(neg, pos))
-    difference = difference + neg
-    difference = difference - pos
-
-    difference = tf.log(1 + tf.exp(difference))
-
-    pos_means = tf.reduce_mean(difference, axis=0)
-    neg_means = tf.reduce_mean(difference, axis=1)
-
-    reduced = tf.concat([pos_means, neg_means], axis=0)
-    res = tf.reduce_mean(reduced)
-    loss = tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-    loss = 1 * loss# + 0.9 * K.binary_crossentropy(y_true, y_pred)
-    return loss
-
-
-def deep_cancer_loss_offline(y_true, y_pred):
-
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    difference = tf.zeros_like(tf.matmul(neg, pos)) + neg - pos
-
-    difference = tf.log(1 + tf.exp(difference))
-
-    res = tf.reduce_mean(difference)
-    return tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-
-
-def auc_loss(y_true, y_pred):
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    beta = 0.9
-
-    difference = tf.sigmoid(beta * (tf.zeros_like(tf.matmul(neg, pos)) + pos - neg))
-
-    res = tf.reduce_mean(difference)
-
-    return 1 - tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-
 def metric_check(y_true, y_pred):
     ''' Implementation from the paper
     Optimizing Classifier Performance via an Approximation to the Wilcoxon-Mann-Whitney Statistic'''
@@ -88,46 +31,6 @@ def metric_check(y_true, y_pred):
     masked = tf.cast(difference < 0, dtype=difference.dtype)
 
     return tf.reduce_sum(masked)
-
-
-def wmw_loss_canonical(y_true, y_pred):
-    ''' Implementation from the paper
-    Optimizing Classifier Performance via an Approximation to the Wilcoxon-Mann-Whitney Statistic'''
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    gamma = 0.5
-    p = 1.5
-
-    difference = tf.zeros_like(tf.matmul(neg, pos)) + pos - neg - gamma
-    masked = difference * tf.cast(difference < 0, dtype=difference.dtype)
-    res = tf.reduce_mean(tf.pow(-masked, p))
-    return tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-
-
-def wmw_loss(y_true, y_pred):
-    '''tflearn implementation'''
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    gamma = 0.5
-    p = 2
-
-    difference = tf.zeros_like(pos * neg) + pos - neg - gamma
-    masked = tf.boolean_mask(difference, difference < 0.0)
-    res = tf.reduce_sum(tf.pow(-masked, p))
-
-    loss = tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(tf.zeros_like(y_true)), lambda: res)
-
-    loss = loss#tf.losses.mean_squared_error(y_true, y_pred)
-
-    return loss
 
 
 def some_loss(y_true, y_pred):
@@ -191,46 +94,6 @@ def some_loss(y_true, y_pred):
     loss = tf.reduce_mean(bce * weight_vector)
 
     return loss
-
-
-def sliding_wmw_loss(y_true, y_pred):
-    pos = tf.boolean_mask(y_pred, tf.cast(y_true, tf.bool))
-    neg = tf.boolean_mask(y_pred, ~tf.cast(y_true, tf.bool))
-
-    pos = tf.expand_dims(pos, 0)
-    neg = tf.expand_dims(neg, 1)
-
-    p = 3
-
-    steps = 10
-    lb = 0
-    ub = 1
-
-    segment = float(ub - lb) / steps
-
-    def approx_function_canonical(x):
-        masked = x * tf.cast(tf.less(x, 0.0), dtype=x.dtype)
-        res = tf.reduce_sum(tf.pow(-masked, p))
-        return tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-
-    def approx_function(x):
-        masked = tf.boolean_mask(x, tf.less(x, 0.0))
-        res = tf.reduce_mean(tf.pow(-masked, p))
-        return tf.cond(tf.is_nan(res), lambda: tf.reduce_mean(y_true), lambda: res)
-
-    difference = tf.zeros_like(tf.matmul(neg, pos)) + pos - neg
-    print('DET')
-    diff_vector = tf.constant(np.linspace(lb, ub, steps), dtype=difference.dtype, shape=(steps, 1, 1))
-    #print 'RNG'
-    #diff_vector = tf.concat([tf.random_uniform((steps, 1, 1), minval=lb, maxval=ub), diff_vector], axis=0)
-    #steps *= 2
-    difference = tf.expand_dims(difference, 0)
-    difference = tf.tile(difference, [steps, 1, 1])
-    difference -= diff_vector
-    difference = tf.cond(
-        tf.logical_or(tf.is_nan(tf.reduce_mean(pos)), tf.is_nan(tf.reduce_mean(neg))),
-        lambda: y_true, lambda: tf.map_fn(approx_function, difference))
-    return tf.reduce_mean(difference * (1 - diff_vector))
 
 
 def page_rank_good_neg_loss(y_true, y_pred):
@@ -418,40 +281,22 @@ def make_net(ld, lr, configs):
     next = input
 
     drate = 0.1
+    width = 2000
 
     #next = l.BatchNormalization()(next)
     next = wide_disc_block(ld, next, configs.get('disc_layer', {}))
     local_model = Model(input=input, output=next)
     next = l.BatchNormalization()(next)
     next = l.Dropout(drate)(next)
-    next = l.Dense(200, activation='elu')(next)
+    next = l.Dense(width, activation='elu')(next)
     next = l.Dropout(drate)(next)
-    next = l.Dense(200, activation='elu')(next)
+    next = l.Dense(width, activation='elu')(next)
+    next = l.Dropout(drate)(next)
+    next = l.Dense(width, activation='elu')(next)
+    next = l.Dropout(drate)(next)
+    next = l.Dense(width, activation='elu')(next)
     #next = l.BatchNormalization()(next)
     #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(200, activation='elu')(next)
-    #next = l.BatchNormalization()(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(400, activation='elu')(next)
-    #next = l.BatchNormalization()(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(300, activation='elu')(next)
-    #next = l.BatchNormalization()(next)
-    #next = l.Dropout(drate)(next)
-
-    #next = l.Dense(ld / 2, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld / 2, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld / 4, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld / 8, activation='elu')(next)
-    #next = l.Dropout(drate)(next)
-    #next = l.Dense(ld / 16, activation='elu')(next)
 
     next = l.Dense(1, activation='sigmoid')(next)
 
