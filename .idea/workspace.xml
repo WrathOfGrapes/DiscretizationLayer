@@ -2,15 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f2981ca8-09fa-4f8b-9b83-12b0569ca446" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/data/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data_split.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_split.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deep_dict.py" beforeDir="false" afterPath="$PROJECT_DIR$/deep_dict.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiment_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/experiment_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/net.py" beforeDir="false" afterPath="$PROJECT_DIR$/net.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_net.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualization.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -74,16 +66,16 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/net.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="532">
-              <caret line="426" column="69" selection-start-line="426" selection-start-column="69" selection-end-line="426" selection-end-column="69" />
+            <state relative-caret-position="370">
+              <caret line="306" column="68" lean-forward="true" selection-start-line="306" selection-start-column="68" selection-end-line="306" selection-end-column="68" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_split.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="126">
@@ -166,13 +158,13 @@
         <option value="$PROJECT_DIR$/abstract_dataset.py" />
         <option value="$PROJECT_DIR$/datasets.py" />
         <option value="$PROJECT_DIR$/data/.gitignore" />
-        <option value="$PROJECT_DIR$/net.py" />
         <option value="$PROJECT_DIR$/train.py" />
         <option value="$PROJECT_DIR$/visualization.py" />
         <option value="$PROJECT_DIR$/deep_dict.py" />
         <option value="$PROJECT_DIR$/experiment_utils.py" />
         <option value="$PROJECT_DIR$/train_net.py" />
         <option value="$PROJECT_DIR$/data_split.py" />
+        <option value="$PROJECT_DIR$/net.py" />
       </list>
     </option>
   </component>
@@ -346,13 +338,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/net.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="532">
-          <caret line="426" column="69" selection-start-line="426" selection-start-column="69" selection-end-line="426" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/visualization.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="281">
@@ -404,6 +389,13 @@
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/net.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="370">
+          <caret line="306" column="68" lean-forward="true" selection-start-line="306" selection-start-column="68" selection-end-line="306" selection-end-column="68" />
         </state>
       </provider>
     </entry>

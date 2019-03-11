@@ -304,7 +304,7 @@ def page_rank_good_neg_loss(y_true, y_pred):
         corr_negative_ratings = tf.squeeze(corr_negative_ratings)
 
         correct_pos = normalize(correct_pos + corr_positive_ratings)
-        correct_neg += normalize(correct_neg + corr_negative_ratings)
+        correct_neg = normalize(correct_neg + corr_negative_ratings)
 
     correct_pos /= pos_percentage
     error_pos /= pos_percentage
