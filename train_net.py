@@ -131,7 +131,7 @@ else:
     X_validation = None
     y_validation = None
 
-batch_size = 1000
+batch_size = 1024
 
 
 def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False, verbose=False):
@@ -161,11 +161,11 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
         print('Checkpoint at', checkpoint_path)
 
     callbacks = [
-        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=3, min_lr=5e-5, verbose=1 if verbose else 0,
+        ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=4, min_lr=5e-5, verbose=1 if verbose else 0,
                           mode='max'),
         ModelCheckpoint(checkpoint_path, monitor='val_auroc', save_best_only=True,
                         mode='max'),
-        EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
+        EarlyStopping(patience=15, monitor='val_auroc', mode='max')]
 
     if verbose:
         if should_validate:

@@ -325,7 +325,7 @@ def shifted_bce(y_true, y_pred):
 
     # Rebalance classes, so now equal probability is 1 - alpha
     alpha = tf.reduce_mean(y_true)
-    pos_percentage = tf.reduce_mean(y_true)
+    pos_percentage = K.epsilon() + tf.reduce_mean(y_true)
     gap = alpha / 20
     threshold_pos = 1 - alpha + gap # 1 - alpha + gap / 2
     threshold_neg = 1 - alpha - gap
@@ -340,18 +340,15 @@ def shifted_bce(y_true, y_pred):
     neg_rebalanced = tf.where(neg < threshold_neg, neg_neg_normed, neg_pos_normed)
     pos_rebalanced = tf.where(pos < threshold_pos, pos_neg_normed, pos_pos_normed)
 
-    pos_bce = -1 * tf.log(K.epsilon() + pos_rebalanced)
-    neg_bce = -1 * tf.log(K.epsilon() + 1 - neg_rebalanced)
+    pos_bce = tf.reduce_mean(-1 * tf.log(K.epsilon() + pos_rebalanced))
+    neg_bce = tf.reduce_mean(-1 * tf.log(K.epsilon() + 1 - neg_rebalanced))
 
-    pos_bce = tf.cond(tf.is_nan(tf.reduce_mean(pos_bce)),
-                      lambda: tf.constant(0, dtype=y_pred.dtype),
-                      lambda: pos_percentage * tf.reduce_mean(pos_bce))
+    loss = pos_percentage * pos_bce + (1 - pos_percentage) * neg_bce
 
-    neg_bce = tf.cond(tf.is_nan(tf.reduce_mean(neg_bce)),
-                      lambda: tf.constant(0, dtype=y_pred.dtype),
-                      lambda: (1 - pos_percentage) * tf.reduce_mean(neg_bce))
+    loss = tf.cond(tf.is_nan(pos_bce), lambda: neg_bce, lambda: loss)
+    loss = tf.cond(tf.is_nan(neg_bce), lambda: pos_bce, lambda: loss)
 
-    loss = pos_bce + neg_bce
+    loss = tf.cond(tf.is_nan(loss), lambda: 0 * tf.reduce_mean(y_pred), lambda: loss)
 
     return loss
 
@@ -366,8 +363,11 @@ class IntervalEvaluation(Callback):
     def on_epoch_end(self, epoch, logs={}):
         if epoch % self.interval == 0:
             y_pred = self.model.predict(self.X_val, verbose=0).reshape(-1)
-            score = roc_auc_score(self.y_val, y_pred)
-            print("interval evaluation - epoch: {:d} - score: {:.6f}".format(epoch, score))
+            try:
+                score = roc_auc_score(self.y_val, y_pred)
+                print("ROC AUC {:.10f}".format(score))
+            except ValueError:
+                print("Error in ROC AUC calculation")
 
 
 def dense_block(size, input, activation):
@@ -388,6 +388,7 @@ def wide_disc_block(size, input, layer_config):#l.Dense(size, activation='elu')(
     next = DiscretizationLayerWide(size, layer_config)(input)
     #next = l.ELU()(next)
     return next
+
 
 def log_block(size, input):
     next = LogarithmLayer(size / 2)(input)
