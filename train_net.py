@@ -17,18 +17,13 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 
-from sklearn.metrics import roc_auc_score
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
-import lightgbm as lgb
-from sklearn.model_selection import KFold, StratifiedKFold
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from net import make_net, IntervalEvaluation, make_net2, make_net3
+from sklearn.preprocessing import  StandardScaler
+from net import make_net, IntervalEvaluation
 import experiment_utils
-from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.utils import class_weight
 import visualization
 import json
 from deep_dict import DeepDict
@@ -36,7 +31,6 @@ from deep_dict import DeepDict
 from keras import backend as K
 import time
 from pprint import pprint
-
 
 
 def history_to_predictions(history):
@@ -146,17 +140,16 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
 
     X_train, y_train = train
     X_test, y_test = test
-    if validation is not None:
-        X_validation, y_validation = validation
-    else:
-        X_validation, y_validation = test
+
+    X_validation, y_validation = validation
+    should_validate = y_validation is not None and X_validation is not None
 
     model, local_model = make_net(ld, lr, configs=configs)
 
     if verbose:
         print_list = ['TR {:6.3f}%'.format(100 * np.mean(y_train)),
                       'TS {:6.3f}%'.format(100 * np.mean(y_test))]
-        if validation is not None:
+        if should_validate:
             print_list.append('VAL {:6.3f}%'.format(100 * np.mean(y_validation)))
         print(' '.join(print_list))
 
@@ -170,18 +163,21 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
     callbacks = [
         ReduceLROnPlateau(monitor='val_auroc', factor=0.5, patience=3, min_lr=5e-5, verbose=1 if verbose else 0,
                           mode='max'),
-        ModelCheckpoint(checkpoint_path, monitor='val_auroc', verbose=1 if verbose else 0, save_best_only=True,
+        ModelCheckpoint(checkpoint_path, monitor='val_auroc', save_best_only=True,
                         mode='max'),
         EarlyStopping(patience=10, monitor='val_auroc', mode='max')]
 
     if verbose:
-        callbacks.append(IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1))
+        if should_validate:
+            callbacks.append(IntervalEvaluation(validation_data=(X_validation, y_validation), interval=1))
+        else:
+            callbacks.append(IntervalEvaluation(validation_data=(X_test, y_test), interval=1))
 
     try:
         model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_test, y_test),
                   callbacks=callbacks, verbose=1 if verbose else 2)
     except KeyboardInterrupt:
-        pass
+        print('')
 
     model.load_weights(checkpoint_path)
 

@@ -343,7 +343,15 @@ def shifted_bce(y_true, y_pred):
     pos_bce = -1 * tf.log(K.epsilon() + pos_rebalanced)
     neg_bce = -1 * tf.log(K.epsilon() + 1 - neg_rebalanced)
 
-    loss = pos_percentage * tf.reduce_mean(pos_bce) + (1 - pos_percentage) * tf.reduce_mean(neg_bce)
+    pos_bce = tf.cond(tf.is_nan(tf.reduce_mean(pos_bce)),
+                      lambda: tf.constant(0, dtype=y_pred.dtype),
+                      lambda: pos_percentage * tf.reduce_mean(pos_bce))
+
+    neg_bce = tf.cond(tf.is_nan(tf.reduce_mean(neg_bce)),
+                      lambda: tf.constant(0, dtype=y_pred.dtype),
+                      lambda: (1 - pos_percentage) * tf.reduce_mean(neg_bce))
+
+    loss = pos_bce + neg_bce
 
     return loss
 
