@@ -4,131 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/layers.py" line="117" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f2981ca8-09fa-4f8b-9b83-12b0569ca446" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/experiments/loss_error/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/loss_error/config_intervals.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.25_0.1_0.5_BCE/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.25_m0.1_0.5_BCE/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.75_0.1_0.5_BCE/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.75_m0.1_0.5_BCE/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_2048/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_depth/depth_0/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_depth/depth_1/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_100/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_150/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_200/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_250/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_300/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_350/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_400/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_dimension/dim_50/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_lr/lr_1e-2/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_val_step/step_12/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_val_step/step_16/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_val_step/step_8/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_width/width_500/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_width/width_650/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/network_width/width_800/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/various/error_mse/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/various/mse/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/various/shift_bce/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/experiments/various/shift_mse/config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/run_experiments_intervals.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/config_defaults.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/config_defaults.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/bce/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_alpha_0.3/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_alpha_0.4/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_alpha_0.6/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_alpha_0.7/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_gap_0.1/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_gap_0.2/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_gap_m0.1/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_gap_m0.2/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_0.1/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_0.1_gap_0.01_alpha_0.1/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_0.1_gap_m0.2_alpha_0.4/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_0.2/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_0/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_m0.1/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/error_shift_m0.2/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/error_loss/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/generalization/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/generalization/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/generalization/generalization/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/generalization/generalization_alpha/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/various/error_bce/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/generalization/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.25_0_0.5_BCE/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.25_0_0.5_BCE/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_0.1_0.5_BCE/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_0.1_0.5_BCE/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_0_0.5_BCE/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_0_0.5_BCE/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_m0.1_0.5_BCE/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.5_m0.1_0.5_BCE/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.75_0_0.5_BCE/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shifted/shifted_0.75_0_0.5_BCE/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_1024/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_1024/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_128/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_128/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_256/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_256/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_384/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_384/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_512/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_512/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/batch_768/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_batch_size/batch_768/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_batch_size/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_2/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_2/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_3/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_3/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_4/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_4/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_5/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_5/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_6/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_6/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_7/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_7/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/depth_8/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_depth/depth_8/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_depth/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/dim_125/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/various/bce/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/dim_175/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/dim_225/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/dim_275/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/dim_75/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_dimension/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/lr_1e-3/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_lr/lr_1e-3/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/lr_1e-4/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_lr/lr_1e-4/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/lr_5e-3/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_lr/lr_5e-3/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr/lr_5e-4/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_lr/lr_5e-4/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/lr_1e-3/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/lr_1e-4/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/lr_5e-3/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_lr_no_decay/lr_5e-4/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/step_2/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_val_step/step_2/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/step_3/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/step_4/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_val_step/step_4/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/step_5/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_val_step/step_6/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_val_step/step_6/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/config_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/discretization_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/losses_defaults.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_150/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_width/width_150/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_250/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_width/width_250/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_350/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_width/width_350/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_450/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_50/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/network_width/width_50/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/network_width/width_550/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/print_batch_results.py" beforeDir="false" afterPath="$PROJECT_DIR$/print_batch_results.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_net.py" afterDir="false" />
-    </list>
+    <list default="true" id="f2981ca8-09fa-4f8b-9b83-12b0569ca446" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -146,7 +22,7 @@
         <entry file="file://$PROJECT_DIR$/run_experiments_intervals.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="258">
-              <caret line="108" column="63" lean-forward="true" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
+              <caret line="108" column="63" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -190,11 +66,20 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/experiments/config_defaults.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="342">
-              <caret line="19" column="24" lean-forward="true" selection-start-line="19" selection-start-column="24" selection-end-line="19" selection-end-column="24" />
+              <caret line="19" column="24" selection-start-line="19" selection-start-column="24" selection-end-line="19" selection-end-column="24" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/experiments/loss_error/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="18">
+              <caret line="1" column="7" lean-forward="true" selection-start-line="1" selection-start-column="7" selection-end-line="1" selection-end-column="7" />
             </state>
           </provider>
         </entry>
@@ -325,7 +210,32 @@
               <item name="DiscretizationLayer" type="b2602c69:ProjectViewProjectNode" />
               <item name="DiscretizationLayer" type="462c0819:PsiDirectoryNode" />
               <item name="experiments" type="462c0819:PsiDirectoryNode" />
+              <item name="loss_error" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="DiscretizationLayer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="DiscretizationLayer" type="462c0819:PsiDirectoryNode" />
+              <item name="experiments" type="462c0819:PsiDirectoryNode" />
+              <item name="loss_shifted" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="DiscretizationLayer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="DiscretizationLayer" type="462c0819:PsiDirectoryNode" />
+              <item name="experiments" type="462c0819:PsiDirectoryNode" />
+              <item name="loss_shifted" type="462c0819:PsiDirectoryNode" />
+              <item name="shifted_0.5_0.1_0.5_BCE" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="DiscretizationLayer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="DiscretizationLayer" type="462c0819:PsiDirectoryNode" />
+              <item name="experiments" type="462c0819:PsiDirectoryNode" />
               <item name="network_batch_size" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="DiscretizationLayer" type="b2602c69:ProjectViewProjectNode" />
+              <item name="DiscretizationLayer" type="462c0819:PsiDirectoryNode" />
+              <item name="experiments" type="462c0819:PsiDirectoryNode" />
+              <item name="network_dimension" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -461,13 +371,6 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/experiments/network_width/width_650/config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="1" column="12" selection-start-line="1" selection-start-column="12" selection-end-line="1" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/experiments/network_width/width_500/config.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="36">
@@ -739,7 +642,7 @@
     <entry file="file://$PROJECT_DIR$/run_experiments_intervals.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="258">
-          <caret line="108" column="63" lean-forward="true" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
+          <caret line="108" column="63" selection-start-line="108" selection-start-column="63" selection-end-line="108" selection-end-column="63" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
@@ -749,7 +652,14 @@
     <entry file="file://$PROJECT_DIR$/experiments/config_defaults.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
-          <caret line="19" column="24" lean-forward="true" selection-start-line="19" selection-start-column="24" selection-end-line="19" selection-end-column="24" />
+          <caret line="19" column="24" selection-start-line="19" selection-start-column="24" selection-end-line="19" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/experiments/loss_error/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="18">
+          <caret line="1" column="7" lean-forward="true" selection-start-line="1" selection-start-column="7" selection-end-line="1" selection-end-column="7" />
         </state>
       </provider>
     </entry>
