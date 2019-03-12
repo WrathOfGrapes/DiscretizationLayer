@@ -4,6 +4,7 @@ import argparse
 import os
 import itertools
 import json
+import numpy as np
 
 
 def create_dir(directory):
@@ -49,6 +50,12 @@ def extract_dict_keys(d):
     return result
 
 
+def extract_dict_value(d):
+    while isinstance(d, dict):
+        d = d[d.keys()[0]]
+    return d
+
+
 def unroll_intervals(intervals_config, previous_keys=[]):
     result = []
     for key in intervals_config.keys():
@@ -64,10 +71,14 @@ def unroll_intervals(intervals_config, previous_keys=[]):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_folder", type=str, help="Path to experiment")
+parser.add_argument("-s", "--samples", type=int, default=60,
+                    help="Corresponding to number of random samples, if 0 all possible samples will be generated")
+parser.add_argument("--seed", type=int, default=None, help="Random seed")
 
 args = parser.parse_args()
 
 experiment_folder = args.experiment_folder
+samples = args.samples
 
 config_path = os.path.join('experiments', experiment_folder)
 assert os.path.isdir(config_path)
@@ -86,20 +97,45 @@ for item in unrolled:
         mapping[identifier] = []
     mapping[identifier].append(item)
 
-multiplication = mapping[mapping.keys()[0]]
-for key in mapping.keys()[1:]:
-    multiplication = list(itertools.product(mapping[key], multiplication))
-    multiplication_fixed = []
-    for item1, item2 in multiplication:
-        if not isinstance(item2, tuple):
-            item = (item1, item2)
-        else:
-            item = (item1,) + item2
-        multiplication_fixed.append(item)
-    multiplication = multiplication_fixed
+
+configuration_list = []
+
+if samples > 0:
+    np.random.seed(args.seed)
+
+    value = 1
+    limits = {}
+    for key in mapping.keys():
+        value *= len(mapping[key])
+        limits[key] = len(mapping[key])
+
+    points = []
+    sample_collection = []
+    while len(points) != samples:
+        sample = list([(key, np.random.randint(0, limits[key])) for key in limits.keys()])
+        sample_to_string = ''.join(list([str(item[1]) for item in sample]))
+        if sample_to_string not in sample_collection:
+            points.append(sample)
+            sample_collection.append(sample_to_string)
+
+    for point in points:
+        configuration_list.append(list([mapping[key][number] for key, number in point]))
+else:
+    configuration_list = mapping[mapping.keys()[0]]
+    for key in mapping.keys()[1:]:
+        configuration_list = list(itertools.product(mapping[key], configuration_list))
+        for i in range(len(configuration_list)):
+            item1, item2 = configuration_list[i]
+            if not isinstance(item2, tuple):
+                item = (item1, item2)
+            else:
+                item = (item1,) + item2
+            configuration_list[i] = item
+
+print(len(configuration_list), 'samples will be generated')
 
 configurations = []
-for item in multiplication:
+for item in configuration_list:
     init_dict = item[0]
     for litem in item[1:]:
         init_dict = merge_dicts(init_dict, litem)

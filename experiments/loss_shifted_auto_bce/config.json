@@ -1,0 +1,9 @@
+{
+  "loss": {
+    "type": "shift",
+    "parameters": {
+      "alpha": "",
+      "gap": ""
+    }
+  }
+}
