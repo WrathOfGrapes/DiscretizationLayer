@@ -1,0 +1,19 @@
+{
+  "bce": {},
+  "mae": {},
+  "mse": {},
+  "error": {
+    "alpha": 0.5,
+    "gap": 0,
+    "target": 0.5,
+    "multiplier": 1,
+    "shift": 0.0,
+    "loss_type": "bce"
+  },
+  "shift": {
+    "alpha": 0.5,
+    "gap": 0,
+    "target": 0.5,
+    "loss_type": "bce"
+  }
+}

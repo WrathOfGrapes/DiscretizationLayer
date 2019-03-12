@@ -29,11 +29,28 @@ default_path = os.path.join(*default_path)
 default_configs_path = default_path
 
 try:
-    configuration = experiment_utils.load_configuration(config_path, default_configs_path)
-    print('Config at', default_configs_path, 'used')
-except IOError:
-    print('Global config will be used as default')
+    loaded = True
     configuration = experiment_utils.load_configuration(config_path, './experiments')
+    print('Global config at', './experiments/', 'applied')
+except IOError:
+    loaded = False
+    configuration = {}
+    print('No global default config found, local will be used as main config')
+
+try:
+    configuration_local = experiment_utils.load_configuration(config_path, default_configs_path)
+    if not loaded:
+        configuration = configuration_local
+    else:
+        configuration = experiment_utils.merge_two_dicts(configuration, configuration_local)
+
+    print('Local config at', default_configs_path, 'applied')
+except IOError:
+    if loaded:
+        print('No local config found')
+    else:
+        print('Neither local nor global configs are available, make sure you specified all parameters in main config')
+        configuration = experiment_utils.load_json(os.path.join(config_path, "config.json"))
 
 import pandas as pd
 import numpy as np

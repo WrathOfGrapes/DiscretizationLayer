@@ -1,0 +1,22 @@
+{
+
+  "loss": {
+    "type": "shift",
+
+    "parameters": {
+      "alpha": 0.5,
+      "gap": 0.1,
+      "target": 0.5,
+      "loss_type": "bce"
+    }
+  },
+
+  "batch size": 384,
+
+  "width": 300,
+  "dimension": 100,
+
+  "validation steps": 8,
+
+  "test size": 30000
+  }

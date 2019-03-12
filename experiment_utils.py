@@ -20,24 +20,25 @@ def merge_two_dicts(x, y):
     return z
 
 
-def load_configuration(config_path, experiment_name):
-    with open(os.path.join(config_path, "config.json"), 'r') as experiment_file:
+def load_json(path):
+    with open(path, 'r') as experiment_file:
         configuration = json.load(experiment_file)
+    return configuration
 
-    with open(os.path.join(experiment_name, "config_defaults.json"), 'r') as defaults_file:
-        configuration_defaults = json.load(defaults_file)
 
+def load_configuration(config_path, experiment_name):
+    configuration = load_json(os.path.join(config_path, "config.json"))
+
+    configuration_defaults = load_json(os.path.join(experiment_name, "config_defaults.json"))
     configuration = merge_two_dicts(configuration_defaults, configuration)
 
-    with open(os.path.join(experiment_name, "losses_defaults.json"), 'r') as defaults_file:
-        losses_defaults = json.load(defaults_file)
+    losses_defaults = load_json(os.path.join(experiment_name, "losses_defaults.json"))
+    configuration = merge_two_dicts(configuration_defaults, configuration)
 
     configuration['loss']['parameters'] = merge_two_dicts(losses_defaults[configuration['loss']['type']],
                                                           configuration['loss']['parameters'])
 
-    with open(os.path.join(experiment_name, "discretization_defaults.json"), 'r') as defaults_file:
-        discretization_defaults = json.load(defaults_file)
-
+    discretization_defaults = load_json(os.path.join(experiment_name, "discretization_defaults.json"))
     configuration['discritezation'] = merge_two_dicts(discretization_defaults, configuration['discritezation'])
 
     return configuration

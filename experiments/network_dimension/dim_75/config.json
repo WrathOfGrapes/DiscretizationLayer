@@ -1,0 +1,13 @@
+{
+  "loss": {
+    "type": "bce",
+    "parameters": {}
+  },
+
+  "epochs": 200,
+  "validation steps": 8,
+
+  "dimension": 75,
+
+  "test size": 30000
+  }

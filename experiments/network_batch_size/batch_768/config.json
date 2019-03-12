@@ -1,0 +1,5 @@
+{
+  "batch size": 768,
+
+  "test size": 30000
+  }

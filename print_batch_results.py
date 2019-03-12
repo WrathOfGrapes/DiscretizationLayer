@@ -31,7 +31,7 @@ def dicts_collect_equal_keys(dicts):
                 dicts_of_dicts = dict([(dkey, dicts[dkey].get(key, {})) for dkey in dicts.keys()])
                 result = dicts_collect_equal_keys(dicts_of_dicts)
                 if len(result) > 0:
-                    keys_to_consider.append([(key, target_keys)])
+                    keys_to_consider.append([(key, result)])
             else:
                 # If no key here, something gone wrong
                 unique_losses = set([dicts[dkey][key]['type'] for dkey in dicts.keys()])
@@ -149,14 +149,18 @@ if non_finished_keys:
         del configs[key]
 
 configs_compact = collect_valuable_parameters(configs, experiment_folder)
-header = '{:^5s} | {:30s} | {:^50s} | {:^10s} ------ {:^10s}'.format('Fold', 'Experiment', 'Setup', 'Instant', 'Mean')
+header = '| {:^5s} | {:60s} | {:^60s} | {:^10s} ------ {:^10s} |'.format('Fold', 'Experiment', 'Setup', 'Instant', 'Mean')
 filler = ''.join(['-'] * len(header))
 print(filler)
 print(header)
 for fold in range(max_log_length):
-    print(filler)
-    for key in configs_compact.keys():
-        pstr = '{:5d} | {:^30s} | {:^50s} | {:10.8f} ------ {:10.8f}'
-        print(pstr.format(fold, key, configs_compact[key], logs[key][fold]['I'], logs[key][fold]['M']))
+    values = list([logs[key][fold]['M'] for key in configs_compact.keys()])
+    values = zip(values, list(range(len(values))))
+    values = sorted(values, key=lambda x: x[0], reverse=True)
+    indicies = zip(*values)[1]
+    for ind in indicies:
+        key = configs_compact.keys()[ind]
+        pstr = '| {:5d} | {:^60s} | {:^60s} | {:10.8f} ------ {:10.8f} |'
+        print(pstr.format(1 + fold, key, configs_compact[key], logs[key][fold]['I'], logs[key][fold]['M']))
 
-print(filler)
+    print(filler)
