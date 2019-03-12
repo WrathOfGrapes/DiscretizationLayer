@@ -12,40 +12,45 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+import experiment_utils
+args = experiment_utils.parse_args()
+
+experiment = args.experiment
+submission = args.submission
+validation = args.validation
+verbose = not args.silent
+save = args.save
+
+config_path = os.path.join('./experiments', experiment)
+default_path = os.path.split(config_path)
+default_path = default_path[:len(default_path) - 1]
+default_path = os.path.join(*default_path)
+
+default_configs_path = default_path
+
+try:
+    configuration = experiment_utils.load_configuration(config_path, default_configs_path)
+    print('Config at', default_configs_path, 'used')
+except IOError:
+    print('Global config will be used as default')
+    configuration = experiment_utils.load_configuration(config_path, './experiments')
+
 import pandas as pd
 import numpy as np
+import tensorflow as tf
+import random
+
+np.random.seed(configuration['np seed'])
+tf.random.set_random_seed(configuration['tf seed'])
+random.seed(configuration['np seed'] + configuration['tf seed'] + 1)
 
 from sklearn.model_selection import train_test_split
 
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
-from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import  StandardScaler
-from net import make_net, IntervalEvaluation
-import experiment_utils
 import visualization
-import json
-from deep_dict import DeepDict
 
-from keras import backend as K
 import time
-from pprint import pprint
-
-
-def history_to_predictions(history):
-    result = []
-    if len(history) != 1:
-        history = np.concatenate(history, axis=1)
-    else:
-        history = history[0]
-    for i in range(history.shape[0]):
-        mean = np.mean(history[i])
-        if mean < 0.5:
-            result.append(min(history[i]))
-        else:
-            result.append(max(history[i]))
-    return np.asarray(result).reshape(-1)
 
 
 def history_to_predictions_mean(history):
@@ -74,41 +79,14 @@ def plot_everything(model, configs, experiment_folder, prefix=''):
                                   axis='vertical',
                                   target_path_prefix=path_prefixs[2])
 
+from keras import backend as K
 
-args = experiment_utils.parse_args()
-n_fold = args.fold
-config = args.config
-name = args.name
-submission = args.submission
-validation = args.validation
-lr = args.lr
-dimension = args.dimension
-verbose = not args.silent
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import  StandardScaler
+from net import make_net, IntervalEvaluation
 
-configs = DeepDict({'name': None,
-                    'disc_layer': {
-                        'bins_init': 'linspace',
-                        'bins_init_range': 3,
-                        'pre_sm_dropout': 0.0,
-                        'probability': 'softmax',
-                        'bias_init': 0.0,
-                        'pre_sm_activation': 'lelu',
-                    }})
-
-configs_update = json.load(open(config, 'r')) if config is not None else {}
-
-configs.merge(configs_update)
-
-if verbose:
-    print('Final config file:')
-    pprint(configs)
-
-# Choosing name. Priorities: name from command line > name in configs > name of the config file
-experiment_name = name or configs['name'] or (
-    os.path.split(config)[-1].split('.')[0] if config else None)
-
-folder_name = experiment_utils.create_experiment_folder(experiment_name)
-folder_path = os.path.join('runs', folder_name)
+folder_name = config_path
 
 if verbose:
     print('Loading data')
@@ -125,18 +103,37 @@ scaler.fit(np.concatenate([X, test], axis=0))
 test = scaler.transform(test)
 X = scaler.transform(X)
 
+X_original = X
+y_original = y
+
+test_size = configuration['test size']
+
 if validation:
-    X, X_validation, y, y_validation = train_test_split(X, y, train_size=0.875, random_state=13)
+    X, X_validation, y, y_validation = train_test_split(X, y, test_size=test_size, shuffle=True,
+                                                        random_state=configuration['val split seed'])
 else:
     X_validation = None
     y_validation = None
 
-batch_size = 1024
+batch_size = configuration['batch size']
 
 
-def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False, verbose=False):
-    print('Fold', fold_number + 1, 'started at', time.ctime())
+def train_model(train, test, validation=None, fold_number=0, plot=False, verbose=False):
+    if verbose:
+        print('Fold', fold_number + 1, 'started at', time.ctime())
     K.clear_session()
+
+    def data_generator(X, y, batch_size):
+        counter = 1
+        steps = len(X) / batch_size
+        while True:
+            if steps == 1:
+                yield X, y
+                continue
+
+            for train_index, test_index in StratifiedKFold(n_splits=steps, shuffle=True,
+                                                           random_state=counter).split(X, y):
+                yield X[test_index], y[test_index]
 
     X_train, y_train = train
     X_test, y_test = test
@@ -144,26 +141,35 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
     X_validation, y_validation = validation
     should_validate = y_validation is not None and X_validation is not None
 
-    model, local_model = make_net(ld, lr, configs=configs)
+    model, local_model = make_net(configuration)
 
     if verbose:
-        print_list = ['TR {:6.3f}%'.format(100 * np.mean(y_train)),
-                      'TS {:6.3f}%'.format(100 * np.mean(y_test))]
+        print_list = ['TR {:10d} {:6.3f}%'.format(len(y_train), 100 * np.mean(y_train)),
+                      'TS {:10d} {:6.3f}%'.format(len(y_test), 100 * np.mean(y_test))]
         if should_validate:
-            print_list.append('VAL {:6.3f}%'.format(100 * np.mean(y_validation)))
+            print_list.append('VAL {:10d} {:6.3f}%'.format(len(y_validation), 100 * np.mean(y_validation)))
         print(' '.join(print_list))
 
     if plot:
-        plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='init_')
+        plot_everything(model, configs=configuration['discritezation'], experiment_folder=config_path, prefix='init_')
 
-    checkpoint_path = os.path.join(folder_path, 'model_' + str(fold_number))
+    checkpoint_path = os.path.join(config_path, 'model_' + str(fold_number))
     if verbose:
         print('Checkpoint at', checkpoint_path)
 
     callbacks = [
-        ModelCheckpoint(checkpoint_path, monitor='val_auroc', save_best_only=True,
-                        mode='max'),
-        EarlyStopping(patience=45, monitor='val_auroc', mode='max')]
+        ReduceLROnPlateau(monitor='val_' + configuration['selector'],
+                          factor=configuration['lr reduce'],
+                          patience=configuration['reduce patience'],
+                          min_lr=configuration['min lr'],
+                          mode=configuration['mode']),
+        ModelCheckpoint(checkpoint_path,
+                        monitor='val_' + configuration['selector'],
+                        save_best_only=True,
+                        mode=configuration['mode']),
+        EarlyStopping(patience=configuration['stop patience'],
+                      monitor='val_' + configuration['selector'],
+                      mode=configuration['mode'])]
 
     if verbose:
         if should_validate:
@@ -172,15 +178,21 @@ def train_model(train, test, lr, ld, validation=None, fold_number=0, plot=False,
             callbacks.append(IntervalEvaluation(validation_data=(X_test, y_test), interval=1))
 
     try:
-        model.fit(X_train, y_train, batch_size=batch_size, epochs=200, shuffle=True, validation_data=(X_test, y_test),
-                  callbacks=callbacks, verbose=1 if verbose else 2)
+        model.fit_generator(data_generator(X_train, y_train, batch_size),
+                            steps_per_epoch=len(X_train) / batch_size,
+                            validation_data=data_generator(X_test, y_test,
+                                                           len(X_test) / configuration['validation steps']),
+                            validation_steps=configuration['validation steps'],
+                            epochs=configuration['epochs'],
+                            callbacks=callbacks,
+                            verbose=1 if verbose else 0)
     except KeyboardInterrupt:
         print('')
 
     model.load_weights(checkpoint_path)
 
     if plot:
-        plot_everything(model, configs=configs, experiment_folder=folder_path, prefix='')
+        plot_everything(model, configs=configuration['discritezation'], experiment_folder=config_path, prefix='')
 
     return model
 
@@ -192,35 +204,84 @@ validation_predictions_history = []
 if verbose:
     print('Training')
 
-if n_fold > 1:
-    iterator = enumerate(StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=42).split(X, y))
+if configuration['folds'] > 1:
+    iterator = enumerate(StratifiedKFold(n_splits=configuration['folds'], shuffle=True,
+                                         random_state=configuration['test split seed']).split(X, y))
 else:
-    ind_train, ind_test = train_test_split(list(range(len(X))), test_size=25000, random_state=23)
+    ind_train, ind_test = train_test_split(list(range(len(X))), test_size=test_size, shuffle=True,
+                                           random_state=configuration['test split seed'])
     iterator = [(0, (ind_train, ind_test))]
+
+log_file = open(os.path.join(config_path, "log"), 'w')
 
 for fold_n, (train_index, test_index) in iterator:
     X_train, X_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
     model = train_model((X_train, y_train),
                         (X_test, y_test),
-                        lr,
-                        dimension,
                         validation=(X_validation, y_validation),
-                        fold_number=fold_n,
-                        verbose=verbose)
-    train_predictions_history.append(model.predict(X))
+                        verbose=verbose,
+                        fold_number=fold_n)
+
+    total_prediction = model.predict(X_original)
+    train_predictions_history.append(total_prediction)
+    inst_total_str = 'INST TOTAL ROC AUC {:.10f}'.format(
+        roc_auc_score(y_original, total_prediction))
+
+    mean_total_str = 'MEAN TOTAL ROC AUC {:.10f}'.format(
+        roc_auc_score(y_original, history_to_predictions_mean(train_predictions_history)))
+
+    train_str = 'INST TRAIN ROC AUC {:.10f}'.format(roc_auc_score(y_train, model.predict(X_train).reshape(-1)))
+
+    test_str = 'INST TEST ROC AUC {:.10f}'.format(roc_auc_score(y_test, model.predict(X_test).reshape(-1)))
     if verbose:
-        print('TOTAL ROC AUC', roc_auc_score(y, history_to_predictions_mean(train_predictions_history)))
-        print('TRAIN ROC AUC', roc_auc_score(y_train, model.predict(X_train).reshape(-1)))
-        print('TEST  ROC AUC', roc_auc_score(y_test, model.predict(X_test).reshape(-1)))
+        print('------------------------------')
+        print(mean_total_str)
+        print(inst_total_str)
+        print('------------------------------')
+        print(train_str)
+        print('------------------------------')
+        print(test_str)
+
     if validation:
-        validation_predictions_history.append(model.predict(X_validation))
-        print('VAL ROC AUC', roc_auc_score(y_validation, history_to_predictions_mean(validation_predictions_history)))
+        validation_prediction = model.predict(X_validation)
+        validation_predictions_history.append(validation_prediction)
+        inst_val_str = 'INST VAL ROC AUC {:.10f}'.format(
+            roc_auc_score(y_validation, validation_prediction))
+        mean_val_str = 'MEAN VAL ROC AUC {:.10f}'.format(
+            roc_auc_score(y_validation, history_to_predictions_mean(validation_predictions_history)))
+
+        log_data_string = [fold_n,
+                           roc_auc_score(y_validation, validation_prediction),
+                           roc_auc_score(y_validation, history_to_predictions_mean(validation_predictions_history))]
+        if verbose:
+            print('------------------------------')
+            print(mean_val_str)
+            print(inst_val_str)
+    else:
+        log_data_string = [fold_n,
+                           roc_auc_score(y_original, total_prediction),
+                           roc_auc_score(y_original, history_to_predictions_mean(train_predictions_history))]
+
+    if verbose:
+        print('------------------------------')
+
     if submission:
         test_predictions_history.append(model.predict(test))
+
+    log_data_string = [str(item) for item in log_data_string]
+    log_file.write(' '.join(log_data_string) + '\n')
+
+log_file.close()
+
+if save:
+    print('Saving predictions')
+    sub = pd.DataFrame({"ID_code": data.ID_code.values, "target": data.target.values})
+    sub["prediction"] = history_to_predictions_mean(train_predictions_history)
+    sub.to_csv(os.path.join(config_path, "predictions.csv"), index=False)
 
 if submission:
     print('Submission')
     sub = pd.DataFrame({"ID_code": test_df.ID_code.values})
     sub["target"] = history_to_predictions_mean(test_predictions_history)
-    sub.to_csv(os.path.join(folder_path, "submission_net.csv"), index=False)
+    sub.to_csv(os.path.join(config_path, "submission.csv"), index=False)

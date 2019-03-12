@@ -1,0 +1,17 @@
+{
+  "loss": {
+    "type": "error",
+
+    "parameters": {
+      "shift": -0.1
+    }
+  },
+
+
+  "epochs": 200,
+  "validation steps": 2,
+
+  "dimension": 75,
+
+  "test size": 30000
+  }

@@ -33,6 +33,30 @@ def metric_check(y_true, y_pred):
     return tf.reduce_sum(masked)
 
 
+def reduce_var(x, axis=None, keepdims=False):
+    m = tf.reduce_mean(x, axis=axis, keep_dims=True)
+    devs_squared = tf.square(x - m)
+    return tf.sqrt(tf.reduce_mean(devs_squared, axis=axis, keep_dims=keepdims))
+
+
+def focal_loss(y_true, y_pred):
+    gamma = 2.0
+    alpha = .25
+
+    pt_1 = y_pred * y_true
+    pt_1 = K.clip(pt_1, K.epsilon(), 1 - K.epsilon())
+    CE_1 = -K.log(pt_1)
+    FL_1 = alpha * K.pow(1 - pt_1, gamma) * CE_1
+
+    pt_0 = (1 - y_pred) * (1 - y_true)
+    pt_0 = K.clip(pt_0, K.epsilon(), 1 - K.epsilon())
+    CE_0 = -K.log(pt_0)
+    FL_0 = (1 - alpha) * K.pow(1 - pt_0, gamma) * CE_0
+
+    loss = K.sum(FL_1, axis=1) + K.sum(FL_0, axis=1)
+    return loss
+
+
 def some_loss(y_true, y_pred):
     y_true = tf.reduce_sum(y_true, axis=1)
     y_pred = tf.reduce_sum(y_pred, axis=1)
@@ -195,59 +219,76 @@ def page_rank_good_neg_loss(y_true, y_pred):
     return loss
 
 
-def shifted_bce(y_true, y_pred):
-    # Rebalance classes, so now equal probability is 1 - alpha
-    alpha = tf.reduce_mean(y_true)
-    pos_percentage = K.epsilon() + tf.reduce_mean(y_true)
-    gap = alpha / 10
-    target_balance = 0.5
+def shifted_loss(alpha, gap, target, loss_type):
 
-    pos, neg = rebalance(y_true, y_pred, alpha, gap, target_balance)
+    def shifted(y_true, y_pred):
+        pos_percentage = K.epsilon() + tf.reduce_mean(y_true)
+        target_balance = target
 
-    pos_bce = tf.reduce_mean(-1 * tf.log(K.epsilon() + pos))
-    neg_bce = tf.reduce_mean(-1 * tf.log(K.epsilon() + 1 - neg))
+        pos, neg = rebalance(y_true, y_pred, alpha, gap, target_balance)
 
-    loss = pos_percentage * pos_bce + (1 - pos_percentage) * neg_bce
+        if loss_type == 'mse':
+            pos_loss = tf.reduce_mean(tf.square(1 - pos))
+            neg_loss = tf.reduce_mean(tf.square(neg))
+        elif loss_type == 'mae':
+            pos_loss = tf.reduce_mean(tf.abs(1 - pos))
+            neg_loss = tf.reduce_mean(tf.abs(neg))
+        else:
+            pos_loss = tf.reduce_mean(-1 * tf.log(K.epsilon() + pos))
+            neg_loss = tf.reduce_mean(-1 * tf.log(K.epsilon() + 1 - neg))
 
-    loss = tf.cond(tf.is_nan(pos_bce), lambda: neg_bce, lambda: loss)
-    loss = tf.cond(tf.is_nan(neg_bce), lambda: pos_bce, lambda: loss)
+        loss = pos_percentage * pos_loss + (1 - pos_percentage) * neg_loss
 
-    loss = tf.cond(tf.is_nan(loss), lambda: 0 * tf.reduce_mean(y_pred), lambda: loss)
+        loss = tf.cond(tf.is_nan(pos_loss), lambda: neg_loss, lambda: loss)
+        loss = tf.cond(tf.is_nan(pos_loss), lambda: neg_loss, lambda: loss)
 
-    return loss
+        loss = tf.cond(tf.is_nan(loss), lambda: 0 * tf.reduce_mean(y_pred), lambda: loss)
+
+        return loss
+
+    return shifted
 
 
-def error_weighted(y_true, y_pred):
-    alpha = tf.reduce_mean(y_true)
-    pos_percentage = K.epsilon() + tf.reduce_mean(y_true)
-    gap = alpha / 20
-    target_balance = 0.5
-    error_weight = pos_percentage
+def error_loss(alpha, gap, target, multiplier, shift, loss_type):
 
-    pos, neg = rebalance(y_true, y_pred, alpha, gap, target_balance)
+    def error_weighted(y_true, y_pred):
+        pos_percentage = K.epsilon() + tf.reduce_mean(y_true)
+        target_balance = target
 
-    pos_expanded = tf.expand_dims(pos, 0)
-    neg_expanded = tf.expand_dims(neg, 1)
+        pos, neg = rebalance(y_true, y_pred, alpha, gap, target_balance)
 
-    difference = tf.zeros_like(pos_expanded * neg_expanded) + pos_expanded - neg_expanded
-    difference = tf.where(difference < 0, (1 + error_weight) * tf.ones_like(difference), tf.ones_like(difference))
-    #difference = tf.where(difference < 0, -1 * difference, tf.zeros_like(difference))
-    #difference += tf.reduce_mean(difference)
+        pos_expanded = tf.expand_dims(pos, 0)
+        neg_expanded = tf.expand_dims(neg, 1)
 
-    neg_weights = tf.reduce_sum(difference, axis=1) / tf.reduce_sum(difference)
-    pos_weights = tf.reduce_sum(difference, axis=0) / tf.reduce_sum(difference)
+        difference = tf.zeros_like(pos_expanded * neg_expanded) + pos_expanded - neg_expanded - shift
+        difference = tf.where(difference < 0, -difference, tf.zeros_like(difference))
+        difference /= K.epsilon() + tf.reduce_max(difference)
+        difference = tf.ones_like(difference) + multiplier * difference
+        difference = tf.stop_gradient(difference)
 
-    pos_bce = tf.reduce_sum(-1 * pos_weights * tf.log(K.epsilon() + pos))
-    neg_bce = tf.reduce_sum(-1 * neg_weights * tf.log(K.epsilon() + 1 - neg))
+        neg_weights = tf.reduce_sum(difference, axis=1) / tf.reduce_sum(difference)
+        pos_weights = tf.reduce_sum(difference, axis=0) / tf.reduce_sum(difference)
 
-    loss = pos_percentage * pos_bce + (1 - pos_percentage) * neg_bce
+        if loss_type == 'mse':
+            pos_loss = tf.reduce_sum(pos_weights * tf.square(1 - pos))
+            neg_loss = tf.reduce_sum(neg_weights * tf.square(neg))
+        elif loss_type == 'mae':
+            pos_loss = tf.reduce_sum(pos_weights * tf.abs(1 - pos))
+            neg_loss = tf.reduce_sum(neg_weights * tf.abs(neg))
+        else:
+            pos_loss = tf.reduce_sum(-1 * pos_weights * tf.log(K.epsilon() + pos))
+            neg_loss = tf.reduce_sum(-1 * neg_weights * tf.log(K.epsilon() + 1 - neg))
 
-    loss = tf.cond(tf.is_nan(pos_bce), lambda: neg_bce, lambda: loss)
-    loss = tf.cond(tf.is_nan(neg_bce), lambda: pos_bce, lambda: loss)
+        loss = pos_percentage * pos_loss + (1 - pos_percentage) * neg_loss
 
-    loss = tf.cond(tf.is_nan(loss), lambda: 0 * tf.reduce_mean(y_pred), lambda: loss)
+        loss = tf.cond(tf.is_nan(pos_loss), lambda: neg_loss, lambda: loss)
+        loss = tf.cond(tf.is_nan(pos_loss), lambda: neg_loss, lambda: loss)
 
-    return loss
+        loss = tf.cond(tf.is_nan(loss), lambda: 0 * tf.reduce_mean(y_pred), lambda: loss)
+
+        return loss
+
+    return error_weighted
 
 
 class IntervalEvaluation(Callback):
@@ -310,83 +351,35 @@ def auroc_tf(y_true, y_pred):
     return auc
 
 
-def make_net(ld, lr, configs):
+def make_net(configuration):
     input = l.Input((200,))
     next = input
 
-    drate = 0.1
-    width = 2000
+    drate = configuration["dropout rate"]
+    width = configuration["width"]
 
-    #next = l.BatchNormalization()(next)
-    next = wide_disc_block(ld, next, configs.get('disc_layer', {}))
+    next = wide_disc_block(configuration['dimension'], next, configuration.get('discritezation', {}))
     local_model = Model(input=input, output=next)
     next = l.BatchNormalization()(next)
-    next = l.Dropout(drate)(next)
-    next = l.Dense(width, activation='elu')(next)
-    next = l.Dropout(drate)(next)
-    next = l.Dense(width, activation='elu')(next)
-    next = l.Dropout(drate)(next)
-    next = l.Dense(width, activation='elu')(next)
-    next = l.Dropout(drate)(next)
-    next = l.Dense(width, activation='elu')(next)
-    #next = l.BatchNormalization()(next)
-    #next = l.Dropout(drate)(next)
+    for _ in range(configuration['depth']):
+        next = l.Dropout(drate)(next)
+        next = l.Dense(width, activation='elu')(next)
 
     next = l.Dense(1, activation='sigmoid')(next)
 
     model = Model(input=input, output=next)
 
-    #model.compile(optimizer=Adam(lr=lr), loss=error_weighted, metrics=[auroc, 'accuracy'])
-    model.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=[auroc, 'accuracy'])
+    if configuration['loss']['type'] == 'error':
+        loss = error_loss(**configuration['loss']['parameters'])
+    elif configuration['loss']['type'] == 'shift':
+        loss = shifted_loss(**configuration['loss']['parameters'])
+    elif configuration['loss']['type'] == 'mse':
+        loss = 'mse'
+    elif configuration['loss']['type'] == 'mae':
+        loss = 'mae'
+    else:
+        loss = 'binary_crossentropy'
 
-    return model, local_model
-
-def make_net3(ld, lr):
-    input = l.Input((200,))
-    next = input
-
-    next = dense_block(4 * ld, next, 'elu')
-    next = l.BatchNormalization()(next)
-    next = l.Dropout(0.1)(next)
-    next = l.Dense(2 * ld, activation='elu')(next)
-    next = l.Dropout(0.1)(next)
-    local_model = Model(input=input, output=next)
-
-    next = l.Dense(1, activation='sigmoid')(next)
-
-    model = Model(input=input, output=next)
-
-    model.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=[auroc, 'accuracy'])
-
-    return model, local_model
-
-def make_net2(ld, lr):
-    input = l.Input((200,))
-    next = input
-
-    next = l.BatchNormalization()(next)
-    next_1 = LogarithmLayer(ld)(next)
-    next_2 = l.Dense(ld, activation='elu')(next)
-    next = l.Concatenate()([next_1, next_2])
-    next = l.Dense(ld, activation='elu')(next)
-    next = l.Dropout(0.2)(next)
-    next_1 = LogarithmLayer(ld)(next)
-    next_2 = l.Dense(ld, activation='elu')(next)
-    next = l.Concatenate()([next_1, next_2])
-    next = l.Dense(ld, activation='elu')(next)
-    next = l.Dropout(0.2)(next)
-    next_1 = LogarithmLayer(ld)(next)
-    next_2 = l.Dense(ld, activation='elu')(next)
-    next = l.Concatenate()([next_1, next_2])
-    next = l.Dense(ld, activation='elu')(next)
-    local_model = Model(input=input, output=next)
-
-    next = l.Dense(1, activation='sigmoid')(next)
-
-    model = Model(input=input, output=next)
-
-    model.compile(optimizer=Adam(lr=lr), loss='binary_crossentropy', metrics=['accuracy'])
-
-    model.summary()
+    model.compile(optimizer=Adam(lr=configuration['learning rate']), loss=loss, metrics=[auroc, 'accuracy'])
 
     return model, local_model

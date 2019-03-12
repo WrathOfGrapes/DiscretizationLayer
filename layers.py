@@ -57,6 +57,7 @@ class DiscretizationLayerWide(Layer):
     def __init__(self, output_dim, layer_config, **kwargs):
         self.output_dim = output_dim
         self.layer_config = layer_config
+        self.dropout = l.Dropout(1 - self.layer_config['pre_sm_dropout'])
         super(DiscretizationLayerWide, self).__init__(**kwargs)
 
     def build(self, input_shape):
@@ -116,7 +117,7 @@ class DiscretizationLayerWide(Layer):
         bins = self.biases - tf.abs(input - self.bins) * self.widths
         if self.layer_config['pre_sm_dropout'] > 0.0:
             # we keep a large negative value with probability `keep_prob`, so technically `keep_prob` have here the opposite meaning
-            bins += l.Dropout(1 - self.layer_config['pre_sm_dropout'])(self.dropout_mask)
+            bins += self.dropout(self.dropout_mask)
 
         if self.layer_config['pre_sm_activation'] == 'elu':
             bins = tf.nn.elu(bins)

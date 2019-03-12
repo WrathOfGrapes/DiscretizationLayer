@@ -1,38 +1,45 @@
 import argparse
-import time
+import json
 import os
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--fold", type=int, default=1, help="Train net on 5 folds without validation set (for kagle submission)")
+    parser.add_argument("experiment", type=str,
+                        help="Path to experiment")
     parser.add_argument("-s", "--submission", action='store_true', help="Create kaggle submission")
     parser.add_argument("-v", "--validation", action='store_true', help="Use validation dataset")
     parser.add_argument("--silent", action='store_true', help="Work in silent mode")
-    parser.add_argument("-c", "--config", type=str, default=None, help="Path to config file")
-    parser.add_argument("-n", "--name", type=str, default=None, help='Experiment name. Default: time in {HH:MM:SS} format')
-    parser.add_argument("-lr", type=float, default=2e-4, help="Learning rate")
-    parser.add_argument("-d", "--dimension", type=int, default=100, help="Internal dimension")
+    parser.add_argument("--save", action='store_true', help="Save predictions for outliers detection")
     return parser.parse_args()
 
 
-def create_experiment_folder(folder_name=None):
-    name = folder_name or time.strftime('%H_%M_%S')
-    i = 0
-    while i < 100:
-        try:
-            postfix = '' if i == 0 else "_%d_" % i
-            os.makedirs('./runs/' + name + postfix)
-            i = None
-            break
-        except:
-            i += 1
-    if i is not None:
-        raise Exception("There are more then 100 experiment folders with name `%s`!" % folder_name)
-    os.makedirs('./runs/' + name + postfix + '/train')
-    os.makedirs('./runs/' + name + postfix + '/test')
-    os.makedirs('./runs/' + name + postfix + '/pics')
-    return name + postfix
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
 
+
+def load_configuration(config_path, experiment_name):
+    with open(os.path.join(config_path, "config.json"), 'r') as experiment_file:
+        configuration = json.load(experiment_file)
+
+    with open(os.path.join(experiment_name, "config_defaults.json"), 'r') as defaults_file:
+        configuration_defaults = json.load(defaults_file)
+
+    configuration = merge_two_dicts(configuration_defaults, configuration)
+
+    with open(os.path.join(experiment_name, "losses_defaults.json"), 'r') as defaults_file:
+        losses_defaults = json.load(defaults_file)
+
+    configuration['loss']['parameters'] = merge_two_dicts(losses_defaults[configuration['loss']['type']],
+                                                          configuration['loss']['parameters'])
+
+    with open(os.path.join(experiment_name, "discretization_defaults.json"), 'r') as defaults_file:
+        discretization_defaults = json.load(defaults_file)
+
+    configuration['discritezation'] = merge_two_dicts(discretization_defaults, configuration['discritezation'])
+
+    return configuration
 
 
