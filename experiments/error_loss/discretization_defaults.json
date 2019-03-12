@@ -1,8 +1,0 @@
-{
-  "bins_init": "linspace",
-  "bins_init_range": 3,
-  "pre_sm_dropout": 0.0,
-  "probability": "softmax",
-  "bias_init": 0.0,
-  "pre_sm_activation": "lelu"
-}

@@ -1,0 +1,11 @@
+{
+  "loss": {
+    "type": "error",
+    "parameters": {
+      "alpha": 0.1,
+      "gap": 0.0,
+      "multiplier": -1,
+      "shift": 0.0
+    }
+  }
+}

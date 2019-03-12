@@ -5,13 +5,13 @@
     "parameters": {}
   },
 
-  "epochs": 100,
-  "validation steps": 1,
-  "batch size": 1000,
+  "epochs": 200,
+  "validation steps": 2,
+  "batch size": 768,
 
-  "dimension": 100,
+  "dimension": 150,
   "depth": 2,
-  "width": 200,
+  "width": 500,
   "dropout rate": 0.1,
 
   "selector": "auroc",
@@ -21,7 +21,7 @@
   "min lr": 1e-5,
   "lr reduce": 0.5,
 
-  "reduce patience": 3,
+  "reduce patience": 4,
   "stop patience": 15,
 
   "test split seed": 13,

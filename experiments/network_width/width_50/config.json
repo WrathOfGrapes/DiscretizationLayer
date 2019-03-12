@@ -1,13 +1,3 @@
 {
-  "loss": {
-    "type": "bce",
-    "parameters": {}
-  },
-
-  "epochs": 200,
-  "validation steps": 8,
-
-  "width": 50,
-
-  "test size": 30000
-  }
+  "width": 50
+}

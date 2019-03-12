@@ -126,8 +126,8 @@ y_original = y
 test_size = configuration['test size']
 
 if validation:
-    X, X_validation, y, y_validation = train_test_split(X, y, test_size=test_size, shuffle=True,
-                                                        random_state=configuration['val split seed'])
+    X, X_validation, y, y_validation = train_test_split(X, y, train_size=float(len(X) - test_size)/len(X),
+                                                        shuffle=True, random_state=configuration['val split seed'])
 else:
     X_validation = None
     y_validation = None

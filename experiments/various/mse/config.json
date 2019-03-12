@@ -1,0 +1,6 @@
+{
+  "loss": {
+    "type": "mse",
+    "parameters": {}
+  }
+}

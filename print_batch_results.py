@@ -153,6 +153,7 @@ header = '| {:^5s} | {:60s} | {:^60s} | {:^10s} ------ {:^10s} |'.format('Fold',
 filler = ''.join(['-'] * len(header))
 print(filler)
 print(header)
+print(filler)
 for fold in range(max_log_length):
     values = list([logs[key][fold]['M'] for key in configs_compact.keys()])
     values = zip(values, list(range(len(values))))
