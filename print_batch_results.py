@@ -127,7 +127,6 @@ experiments = [os.path.join(experiment_folder, directory) for directory in os.li
 logs = {}
 configs = {}
 for experiment in experiments:
-    print('Reading', experiment)
     splitted = os.path.split(experiment)
     key = splitted[len(splitted) - 1]
     logs[key] = get_log_results(os.path.join('experiments', experiment))
@@ -141,16 +140,13 @@ non_finished_keys = [key for key in logs.keys() if len(logs[key].keys()) != max_
 
 if non_finished_keys:
     for key in non_finished_keys:
-        print(
-            '{:s} will be dropped due to log length '
-            'inconsistency: length {:d} should be {:d}'.format(key, len(logs[key].keys()), max_log_length))
-
         del logs[key]
         del configs[key]
 
 configs_compact = collect_valuable_parameters(configs, experiment_folder)
 header = '| {:^5s} | {:60s} | {:^60s} | {:^10s} ------ {:^10s} |'.format('Fold', 'Experiment', 'Setup', 'Instant', 'Mean')
 filler = ''.join(['-'] * len(header))
+print()
 print(filler)
 print(header)
 print(filler)
@@ -165,3 +161,5 @@ for fold in range(max_log_length):
         print(pstr.format(1 + fold, key, configs_compact[key], logs[key][fold]['I'], logs[key][fold]['M']))
 
     print(filler)
+
+print()

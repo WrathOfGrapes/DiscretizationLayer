@@ -15,7 +15,6 @@ def create_dir(directory):
 def create_gitignore(directory):
     with open(os.path.join(directory, '.gitignore'), 'w') as f:
         f.write('*\n')
-        f.write('!*.json\n')
 
 
 def merge_dicts(d1, d2):

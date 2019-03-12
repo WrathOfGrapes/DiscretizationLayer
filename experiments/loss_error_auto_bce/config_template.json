@@ -8,5 +8,14 @@
       "shift": "",
       "loss_type": ""
     }
-  }
+  },
+
+  "dimension": 20,
+  "depth": 1,
+  "width": 100,
+  "epochs": 75,
+
+  "batch size": 2048,
+
+  "stop patience": 10
 }

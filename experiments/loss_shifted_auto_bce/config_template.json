@@ -12,5 +12,7 @@
   "width": 100,
   "epochs": 75,
 
-  "batch size": 2048
+  "batch size": 2048,
+
+  "stop patience": 10
 }
