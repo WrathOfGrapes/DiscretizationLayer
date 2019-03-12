@@ -22,7 +22,7 @@
   "lr reduce": 0.5,
 
   "reduce patience": 4,
-  "stop patience": 15,
+  "stop patience": 10,
 
   "test split seed": 13,
   "val split seed": 27,

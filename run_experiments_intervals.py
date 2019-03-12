@@ -83,7 +83,7 @@ samples = args.samples
 config_path = os.path.join('experiments', experiment_folder)
 assert os.path.isdir(config_path)
 
-config = experiment_utils.load_json(os.path.join(config_path, 'config.json'))
+config = experiment_utils.load_json(os.path.join(config_path, 'config_template.json'))
 intervals = experiment_utils.load_json(os.path.join(config_path, 'config_intervals.json'))
 
 unrolled = unroll_intervals(intervals)

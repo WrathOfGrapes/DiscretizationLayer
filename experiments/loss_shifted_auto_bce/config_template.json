@@ -5,5 +5,12 @@
       "alpha": "",
       "gap": ""
     }
-  }
+  },
+
+  "dimension": 20,
+  "depth": 1,
+  "width": 100,
+  "epochs": 75,
+
+  "batch size": 2048
 }
