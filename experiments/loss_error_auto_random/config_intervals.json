@@ -1,0 +1,12 @@
+{
+  "loss": {
+    "type": "error",
+    "parameters": {
+      "alpha": ["U 0.1 0.9"],
+      "gap": ["U -0.4 0.4"],
+      "multiplier": ["B -1 1"],
+      "shift": ["U 0 0.4"],
+      "loss_type": ["bce"]
+    }
+  }
+}

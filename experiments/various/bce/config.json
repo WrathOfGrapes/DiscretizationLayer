@@ -1,6 +1,0 @@
-{
-  "loss": {
-    "type": "bce",
-    "parameters": {}
-  }
-}

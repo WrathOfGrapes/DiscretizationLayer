@@ -68,7 +68,10 @@ def dict_to_string(dictionary):
         if isinstance(dictionary[key], dict):
             c_string += [key] + dict_to_string(dictionary[key])
         else:
-            c_string += [key, str(dictionary[key])]
+            pstr = str(dictionary[key])
+            if isinstance(dictionary[key], float):
+                pstr = '{:4.3f}'.format(dictionary[key])
+            c_string += [key, pstr]
     return c_string
 
 
@@ -144,7 +147,7 @@ if non_finished_keys:
         del configs[key]
 
 configs_compact = collect_valuable_parameters(configs, experiment_folder)
-header = '| {:^5s} | {:60s} | {:^60s} | {:^10s} ------ {:^10s} |'.format('Fold', 'Experiment', 'Setup', 'Instant', 'Mean')
+header = '| {:^5s} | {:40s} | {:^90s} | {:^10s} ------ {:^10s} |'.format('Fold', 'Experiment', 'Setup', 'Instant', 'Mean')
 filler = ''.join(['-'] * len(header))
 print()
 print(filler)
@@ -157,7 +160,7 @@ for fold in range(max_log_length):
     indicies = zip(*values)[1]
     for ind in indicies:
         key = configs_compact.keys()[ind]
-        pstr = '| {:5d} | {:^60s} | {:^60s} | {:10.8f} ------ {:10.8f} |'
+        pstr = '| {:5d} | {:^40s} | {:^90s} | {:10.8f} ------ {:10.8f} |'
         print(pstr.format(1 + fold, key, configs_compact[key], logs[key][fold]['I'], logs[key][fold]['M']))
 
     print(filler)

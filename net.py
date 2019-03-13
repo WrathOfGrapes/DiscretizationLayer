@@ -369,6 +369,7 @@ def make_net(configuration):
 
     model = Model(input=input, output=next)
 
+    loss = None
     if configuration['loss']['type'] == 'error':
         loss = error_loss(**configuration['loss']['parameters'])
     elif configuration['loss']['type'] == 'shift':
@@ -377,8 +378,10 @@ def make_net(configuration):
         loss = 'mse'
     elif configuration['loss']['type'] == 'mae':
         loss = 'mae'
-    else:
+    elif configuration['loss']['type'] == 'bce':
         loss = 'binary_crossentropy'
+
+    assert loss is not None
 
     model.compile(optimizer=Adam(lr=configuration['learning rate']), loss=loss, metrics=[auroc, 'accuracy'])
 

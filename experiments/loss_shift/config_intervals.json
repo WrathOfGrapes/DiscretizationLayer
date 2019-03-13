@@ -1,0 +1,10 @@
+{
+  "loss": {
+    "type": "shift",
+    "parameters": {
+      "alpha": ["U 0.1 0.9"],
+      "gap": ["U -0.4 0.4"],
+      "loss_type": ["bce"]
+    }
+  }
+}
