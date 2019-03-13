@@ -171,7 +171,7 @@ def configuration_generator(r, d):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_folder", type=str, help="Path to experiment")
-parser.add_argument("-s", "--samples", type=int, default=60,
+parser.add_argument("-s", "--samples", type=int, default=0,
                     help="Corresponding to number of random samples, if 0 all possible samples will be generated")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
 
