@@ -29,11 +29,11 @@
   "np seed": 197,
   "tf seed": 17,
 
-  "test size": 25000,
+  "test size": 50000,
 
   "folds": 1,
 
-  "stratify": true,
+  "stratify": false,
 
   "discritezation": {}
   }
