@@ -33,5 +33,7 @@
 
   "folds": 1,
 
+  "stratify": true,
+
   "discritezation": {}
   }

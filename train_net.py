@@ -195,14 +195,22 @@ def train_model(train, test, validation=None, fold_number=0, plot=False, verbose
             callbacks.append(IntervalEvaluation(validation_data=(X_test, y_test), interval=1))
 
     try:
-        model.fit_generator(data_generator(X_train, y_train, batch_size),
-                            steps_per_epoch=len(X_train) / batch_size,
-                            validation_data=data_generator(X_test, y_test,
-                                                           len(X_test) / configuration['validation steps']),
-                            validation_steps=configuration['validation steps'],
-                            epochs=configuration['epochs'],
-                            callbacks=callbacks,
-                            verbose=1 if verbose else 0)
+        if configuration['stratify']:
+            model.fit_generator(data_generator(X_train, y_train, batch_size),
+                                steps_per_epoch=len(X_train) / batch_size,
+                                validation_data=data_generator(X_test, y_test,
+                                                               len(X_test) / configuration['validation steps']),
+                                validation_steps=configuration['validation steps'],
+                                epochs=configuration['epochs'],
+                                callbacks=callbacks,
+                                verbose=1 if verbose else 0)
+        else:
+            model.fit(X_train, y_train, batch_size=batch_size,
+                      validation_data=(X_test, y_test),
+                      epochs=configuration['epochs'],
+                      callbacks=callbacks,
+                      verbose=1 if verbose else 0)
+
     except KeyboardInterrupt:
         print('')
 
