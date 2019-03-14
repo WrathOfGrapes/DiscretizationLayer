@@ -24,7 +24,7 @@ def binary_random(a, b, size=None):
 
 
 def is_distribution(value):
-    if not (isinstance(value, unicode) or (isinstance(value, str))):
+    if not (isinstance(value, str)):
         return False
     value = value.split(' ')
     if len(value) != 3:
@@ -105,7 +105,7 @@ def disassemble_instance(d):
 
 def merge_dicts(d1, d2):
     result = {}
-    total_keys = set(d1.keys() + d2.keys())
+    total_keys = set(list(d1.keys()) + list(d2.keys()))
     for key in total_keys:
         if key in d1.keys() and key in d2.keys():
             if isinstance(d1[key], dict) and isinstance(d1[key], dict):
@@ -200,7 +200,7 @@ for item in unrolled:
 configuration_list = mapping[list(mapping.keys())[0]]
 if len(mapping.keys()) == 1:
     configuration_list = list([[item] for item in configuration_list])
-for key in mapping.keys()[1:]:
+for key in list(mapping.keys())[1:]:
     configuration_list = list(itertools.product(mapping[key], configuration_list))
     for i in range(len(configuration_list)):
         item1, item2 = configuration_list[i]
