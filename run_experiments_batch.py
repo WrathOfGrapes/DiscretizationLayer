@@ -1,4 +1,6 @@
 from __future__ import print_function
+import pandas as pd
+from train_net import *
 
 
 def warn(*args, **kwargs):
@@ -26,23 +28,23 @@ experiment_folders = experiment_folder.split(' ')
 verbose = not args.silent
 save = args.save
 
-command_template = 'python train_net.py {:s} -v'
-if not verbose:
-    command_template += ' --silent'
-if save:
-    command_template += ' --save'
+data = pd.read_csv('./data/train.csv')
+X = data.drop(columns=['ID_code', 'target']).values
+y = data['target'].values
 
+test_df = pd.read_csv('./data/test.csv')
+test = test_df.drop(columns=['ID_code']).values
 
 for folder in experiment_folders:
     config_path = os.path.join('experiments', folder)
 
-    assert os.path.isdir(config_path)
-
     experiments = [os.path.join(folder, directory) for directory in os.listdir(config_path)
                    if os.path.isdir(os.path.join(config_path, directory))]
 
-    for experiment in experiments:
+    for experiment in sorted(experiments):
         print('Running', experiment)
-        print('Command :', command_template.format(experiment))
-        os.system(command_template.format(experiment))
+
+        configuration = load_config(experiment)
+
+        train_network(X, y, test, configuration, verbose, False, True, save)
 

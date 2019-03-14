@@ -10,12 +10,12 @@
     }
   },
 
-  "dimension": 20,
+  "dimension": 300,
   "depth": 1,
-  "width": 100,
-  "epochs": 75,
+  "width": 50,
+  "epochs": 100,
 
-  "batch size": 512,
+  "batch size": 256,
 
   "stop patience": 10
 }

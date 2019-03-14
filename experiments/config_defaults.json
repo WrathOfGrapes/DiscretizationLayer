@@ -9,9 +9,9 @@
   "validation steps": 2,
   "batch size": 768,
 
-  "dimension": 150,
+  "dimension": 50,
   "depth": 2,
-  "width": 500,
+  "width": 200,
   "dropout rate": 0.1,
 
   "selector": "auroc",
@@ -29,7 +29,7 @@
   "np seed": 197,
   "tf seed": 17,
 
-  "test size": 50000,
+  "test size": 25000,
 
   "folds": 1,
 
