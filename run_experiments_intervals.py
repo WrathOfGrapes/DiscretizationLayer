@@ -130,14 +130,14 @@ def get_dict_from_keys(keys_list, value):
 def extract_dict_keys(d):
     result = []
     while isinstance(d, dict):
-        result.append(d.keys()[0])
-        d = d[d.keys()[0]]
+        result.append(list(d.keys())[0])
+        d = d[list(d.keys())[0]]
     return result
 
 
 def extract_dict_value(d):
     while isinstance(d, dict):
-        d = d[d.keys()[0]]
+        d = d[list(d.keys())[0]]
     return d
 
 
@@ -197,7 +197,7 @@ for item in unrolled:
         mapping[identifier] = []
     mapping[identifier].append(item)
 
-configuration_list = mapping[mapping.keys()[0]]
+configuration_list = mapping[list(mapping.keys())[0]]
 if len(mapping.keys()) == 1:
     configuration_list = list([[item] for item in configuration_list])
 for key in mapping.keys()[1:]:
