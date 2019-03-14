@@ -5,11 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f2981ca8-09fa-4f8b-9b83-12b0569ca446" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/config_defaults.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/config_defaults.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_error/config_template.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_error/config_template.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/experiments/loss_shift/config_template.json" beforeDir="false" afterPath="$PROJECT_DIR$/experiments/loss_shift/config_template.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/run_experiments_batch.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_experiments_batch.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_net.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -74,8 +69,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_net.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="442">
-              <caret line="94" column="83" selection-start-line="94" selection-start-column="83" selection-end-line="94" selection-end-column="83" />
+            <state relative-caret-position="479">
+              <caret line="203" column="37" selection-start-line="203" selection-start-column="37" selection-end-line="203" selection-end-column="37" />
             </state>
           </provider>
         </entry>
@@ -112,7 +107,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>gamma</find>
       <find>feature</find>
       <find>softmax_model</find>
       <find>batch_size</find>
@@ -142,6 +136,7 @@
       <find>train_test_split</find>
       <find>submissiom</find>
       <find>validation</find>
+      <find>plot_everything</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -199,8 +194,8 @@
         <option value="$PROJECT_DIR$/experiments/config_defaults.json" />
         <option value="$PROJECT_DIR$/experiments/loss_shift/config_template.json" />
         <option value="$PROJECT_DIR$/experiments/loss_error/config_template.json" />
-        <option value="$PROJECT_DIR$/train_net.py" />
         <option value="$PROJECT_DIR$/run_experiments_batch.py" />
+        <option value="$PROJECT_DIR$/train_net.py" />
       </list>
     </option>
   </component>
@@ -566,8 +561,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_net.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="94" column="83" selection-start-line="94" selection-start-column="83" selection-end-line="94" selection-end-column="83" />
+        <state relative-caret-position="479">
+          <caret line="203" column="37" selection-start-line="203" selection-start-column="37" selection-end-line="203" selection-end-column="37" />
         </state>
       </provider>
     </entry>

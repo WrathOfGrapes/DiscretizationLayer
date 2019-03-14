@@ -73,7 +73,7 @@ def history_to_predictions_mean(history):
     return np.mean(history, axis=1).reshape(-1)
 
 
-def plot_everything(model, configs, experiment_folder, prefix=''):
+def plot_everything(X_train, model, configs, experiment_folder, prefix=''):
     visualization.plot_bin_vertical(model, [0, 30, 60, 90],
                                     target_path=os.path.join(experiment_folder, 'pics', 'bins_vertical.png'))
 
@@ -151,7 +151,7 @@ def train_network(X, y, test, configuration, verbose, submission, validation, sa
             print(' '.join(print_list))
 
         if plot:
-            plot_everything(model, configs=configuration['discritezation'],
+            plot_everything(X_train, model, configs=configuration['discritezation'],
                             experiment_folder=configuration['path'], prefix='init_')
 
         checkpoint_path = os.path.join(configuration['path'], 'model_' + str(fold_number))
@@ -201,7 +201,7 @@ def train_network(X, y, test, configuration, verbose, submission, validation, sa
         model.load_weights(checkpoint_path)
 
         if plot:
-            plot_everything(model, configs=configuration['discritezation'],
+            plot_everything(X_train, model, configs=configuration['discritezation'],
                             experiment_folder=configuration['path'], prefix='')
 
         return model
